@@ -1,0 +1,47 @@
+@model PasswordManager.Models.UserModel
+
+@{
+    ViewData["Title"] = "Login";
+    Layout = "_LoginSignUpLayout";
+}
+
+<h1 class="text-center">Log in</h1>
+
+@if (TempData["sessionExpired"] is not null)
+{
+    <div class="alert alert-danger">@TempData["sessionExpired"]</div>
+}
+
+@using(Html.BeginForm("Login", "Login", FormMethod.Post, new {@id = "contactForm"}))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-outline mb-4">
+        @Html.LabelFor(m => m.username, new {@class="form-label"})
+        @Html.TextBoxFor(m => m.username, new { @class = "form-control", id = "input1", placeholder = "Username", type="text" })
+        @Html.ValidationMessageFor(m => m.username, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-outline mb-4">
+        @Html.LabelFor(m => m.password, new {@class="form-label"})
+        @Html.TextBoxFor(m => m.password, new { @class = "form-control", id = "input1", placeholder = "Password", type="password" })
+        @Html.ValidationMessageFor(m => m.password, "", new { @class = "text-danger" })
+    </div>
+
+    <input id="submitButton" type="submit" value="Log in" class="btn btn-primary" />
+
+    <div class="text-center">
+        <p>Don't have an account? @Html.ActionLink("Sign up", "Index", "Register")</p>
+    </div>
+}
+
+@if (TempData["incorrectLogin"] is not null)
+{
+    <div class="alert alert-danger">@TempData["incorrectLogin"]</div>
+}
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

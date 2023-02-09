@@ -1,0 +1,38 @@
+@model PasswordManager.Models.UserModel
+
+@{
+    ViewData["Title"] = "Register";
+    Layout = "_LoginSignUpLayout";
+}
+
+<h1 class="text-center">Create an Account</h1>
+
+@using(Html.BeginForm("Register", "Register", FormMethod.Post, new {@id = "contactForm"}))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-outline mb-4">
+        @Html.LabelFor(m => m.username, new {@class="form-label"})
+        @Html.TextBoxFor(m => m.username, new { @class = "form-control", id = "input1", placeholder = "Username", type="text" })
+        @Html.ValidationMessageFor(m => m.username, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-outline mb-4">
+        @Html.LabelFor(m => m.password, new {@class="form-label"})
+        @Html.TextBoxFor(m => m.password, new { @class = "form-control", id = "input1", placeholder = "Password", type="password" })
+        @Html.ValidationMessageFor(m => m.password, "", new { @class = "text-danger" })
+    </div>
+
+    <input id="submitButton" type="submit" value="Sign up" class="btn btn-primary" />
+
+    <div class="text-center">
+    <p>Already have an account? @Html.ActionLink("Log in", "Index", "Login")</p>
+    </div>
+}
+
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

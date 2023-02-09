@@ -1,0 +1,86 @@
+﻿@inject IHttpContextAccessor ctx
+@using PasswordManager.Models
+@model AccountModel
+
+@{
+    ViewData["Title"] = "Password List";
+}
+
+<div class="text-center text-wrap">
+    <h1 class="display-4">Passwords</h1>
+    <p class="text-wrap">@ViewBag.val</p>
+    <ul>
+        <li>@ctx.HttpContext!.Session.GetString("userId")</li>
+        <li>@ctx.HttpContext.Session.GetInt32("userIdInt")</li>
+    </ul>
+    <section class="vh-100" style={{backgroundColor: "#eee"}}>
+        <div class="container py-5 h-100">
+            <div class="row d-flex justify-content-center align-items-center h-100">
+            <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+                <div class="card rounded-3">
+                    <div class="card-body p-4">
+                        <h4 class="text-center my-3 pb-3">Password database query</h4>
+                        <div class="col-12">
+                            <div class="form-outline">
+
+                                @Html.TextBoxFor(m => m.title, new { @class = "form-control", id = "filterInput", placeholder = "Filter by title...", type="text", ariaLabel="title", required=true})
+
+
+                                <form onSubmit={handleAdd}>
+                                    <div class="input-group">
+
+                                        @Html.TextBoxFor(m => m.title, new { @class = "form-control", id = "input1", placeholder = "Enter a title...", type="text", ariaLabel="title", required=true})
+
+                                        @Html.TextBoxFor(m => m.username, new { @class = "form-control", id = "input2", placeholder = "Enter a username...", type="text", ariaLabel="username", required=true})
+
+                                        @Html.TextBoxFor(m => m.password, new { @class = "form-control", id = "input3", placeholder = "Enter a password...", type="text", ariaLabel="password", required=true})
+
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        class="btn btn-primary ms-1">
+                                        Add account
+                                    </button>
+                                </form>
+
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table mb-4">
+                            <thead>
+                                <tr>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">Title</th>
+                                    <th scope="col">Username</th>
+                                    <th scope="col">Password</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @* display list of passwords associated with this account. If there are none. show a view where it tells the user there are currently no passwords *@
+                                @* {
+                                    lstOfAccounts
+                                    .filter((account: AccountType) => searchTerm === '' || searchTerm.toLowerCase().includes(account.title!))
+                                    .map((account : AccountType) =>
+                                        {
+                                            return (<AccountTitle
+                                                key={account.id}
+                                                account={account}
+                                                lstOfAccounts={lstOfAccounts}
+                                                setLstOfAccounts={setLstOfAccounts}
+                                                handleDelete={handleDelete}
+                                                handleUpdate={handleUpdate}
+                                            />)
+                                        }
+                                    )
+                                } *@
+                            </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </section>
+</div>
