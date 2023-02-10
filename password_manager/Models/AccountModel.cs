@@ -1,5 +1,6 @@
 
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PasswordManager.Models;
 
@@ -9,7 +10,8 @@ public class AccountModel
     public string? accountId { get; set; }
 
     // each account will be associated with only one user
-    [Required]
+    [Required, ForeignKey("UserModel")]
+    public string? userId {get; set;}
     public UserModel user {get; set;}
 
     [Required, StringLength(32)]

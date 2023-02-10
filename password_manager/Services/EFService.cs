@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
@@ -24,7 +25,7 @@ public class EFService : IDataAccess<AccountModel>
         return await db.SaveChangesAsync();
     }
 
-    public async Task<IResult> Get()
+    public async Task<IEnumerable<AccountModel>> Get()
     {
         try
         {
@@ -32,14 +33,14 @@ public class EFService : IDataAccess<AccountModel>
 
             models.ForEach(model => model.password = SymmetricEncryptionHandler.DecryptStringFromBytes_Aes(Convert.FromBase64String(model.password!), Convert.FromBase64String(model.aesKey!), Convert.FromBase64String(model.aesIV!)));
 
-            logger.LogInformation("retrieved models from get request");
+            logger.LogWarning("retrieved models from get request");
 
-            return Results.Ok(JsonConvert.SerializeObject(models, Formatting.Indented));
+            return models.AsEnumerable();
         }
         catch (Exception e)
         {
             logger.LogError(e.Message);
-            return Results.BadRequest(e.Message);
+            return null!;
         }
     }
 
@@ -50,7 +51,7 @@ public class EFService : IDataAccess<AccountModel>
         client sends jwt back to server,
         for every CRUD action performed
     */
-    public async Task<IResult> Get(string userId)
+    public async Task<IEnumerable<AccountModel>> Get(string userId)
     {
         try
         {
@@ -61,30 +62,34 @@ public class EFService : IDataAccess<AccountModel>
 
             models.ForEach(model => model.password = SymmetricEncryptionHandler.DecryptStringFromBytes_Aes(Convert.FromBase64String(model.password!), Convert.FromBase64String(model.aesKey!), Convert.FromBase64String(model.aesIV!)));
 
-            logger.LogInformation("retrieved models from get request");
+            logger.LogWarning($"retrieved models from get request by id: {userId}");
 
-            // return Results.Ok(JsonConvert.SerializeObject(models, Formatting.Indented));
-            return Results.Ok(models);
+            return models;
         }
         catch (Exception e)
         {
             logger.LogError(e.Message);
-            return Results.BadRequest(e.Message);
+            return null!;
         }
     }
 
-    public async Task<IResult> Post(AccountModel model)
+    /// <summary>
+    /// post an account into the db
+    /// </summary>
+    /// <param name="model">model to be entered</param>
+    /// <param name="userId">the user id associated with this account</param>
+    /// <returns></returns>
+    public async Task<IResult> Post(AccountModel model, string userId)
     {
         try
         {
             if (string.IsNullOrEmpty(model.title) || model.username.IsNullOrEmpty() || model.password.IsNullOrEmpty())
             {
-                logger.LogInformation("one or more fields are null or empty");
+                logger.LogWarning("one or more fields are null or empty");
                 throw new Exception("not all fields have been properly assigned for your model");
             }
 
-
-            processModelPassword(model);
+            decodeModelPassword(model);
             model.accountId = Guid.NewGuid().ToString();
             DateTime myDate = DateTime.ParseExact(
                 DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
@@ -93,16 +98,15 @@ public class EFService : IDataAccess<AccountModel>
             );
             model.insertedDateTime = model.lastModifiedDateTime = myDate.ToString();
 
-            // shadow property
-            var userId = db.Entry(model).Property<string?>("userId").CurrentValue;
-            string userIdValueFromJWTThatWasSentBackFromClient = "";
-            db.Entry(model).Property<string?>("userId").CurrentValue = userIdValueFromJWTThatWasSentBackFromClient;
+            logger.LogWarning(userId);
+            // db.Entry(model).Property<string?>("userId").CurrentValue = userId;
+            model.userId = userId;
 
 
-            logger.LogInformation($"{model}");
+            logger.LogWarning($"{model}");
             await db.AddAsync(model);
             await Commit();
-            logger.LogInformation($"model {model} was successfully added to db");
+            logger.LogWarning($"model {model} was successfully added to db");
             return Results.Ok($"{model} was successfully added");
         }
         catch (System.Exception e)
@@ -112,34 +116,7 @@ public class EFService : IDataAccess<AccountModel>
         }
     }
 
-    // public async Task<IResult> Get(string id)
-    // {
-    //     try
-    //     {
-    //         // var model = await db.PasswordTableEF.FindAsync(id);
-    //         logger.LogInformation($"table name: \"public\".\"{nameof(db.PasswordTableEF)}\"");
-
-    //         var model = await db.PasswordTableEF.FromSqlRaw($"select * from \"public\".\"{nameof(db.PasswordTableEF)}\" where id = '{id}'").FirstOrDefaultAsync();
-
-    //         if (model is null)
-    //         {
-    //             throw new Exception("Couldn't get by id because model is null");
-    //         }
-
-    //         logger.LogInformation($"{model}");
-
-    //         model.password = SymmetricEncryptionHandler.DecryptStringFromBytes_Aes(Convert.FromBase64String(model.password!), Convert.FromBase64String(model.aesKey!), Convert.FromBase64String(model.aesIV!));
-
-    //         return Results.Ok(model);
-    //     }
-    //     catch (System.Exception e)
-    //     {
-    //         logger.LogError(e.Message);
-    //         return Results.BadRequest(e.Message);
-    //     }
-    // }
-
-    public async Task<IResult> Delete(string id)
+    public async Task<AccountModel> Delete(string id)
     {
         try
         {
@@ -154,17 +131,17 @@ public class EFService : IDataAccess<AccountModel>
 
             await Commit();
 
-            logger.LogInformation($"model ({model}) has been deleted");
+            logger.LogWarning($"model ({model}) has been deleted");
 
-            return Results.Ok(model);
+            return model;
 
         }
         catch (System.Exception e)
         {
             logger.LogError("Deletion failed :(. Couldn't find model.");
-            return Results.BadRequest(e.Message);
+            logger.LogError(e.Message);
+            return null!;
         }
-
     }
 
     public async Task<IResult> PostMany(List<AccountModel> models)
@@ -173,7 +150,7 @@ public class EFService : IDataAccess<AccountModel>
         {
             models.ForEach((model) =>
             {
-                processModelPassword(model);
+                decodeModelPassword(model);
                 model.accountId = Guid.NewGuid().ToString();
                 DateTime myDate = DateTime.ParseExact(
                     DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
@@ -187,11 +164,11 @@ public class EFService : IDataAccess<AccountModel>
                 string userIdValueFromJWTThatWasSentBackFromClient = "";
                 db.Entry(model).Property<string?>("userId").CurrentValue = userIdValueFromJWTThatWasSentBackFromClient;
 
-                logger.LogInformation($"shadow property: {userId}");
+                logger.LogWarning($"shadow property: {userId}");
             });
             await db.PasswordTableEF.AddRangeAsync(models);
             await Commit();
-            logger.LogInformation("your accounts have been successfully added");
+            logger.LogWarning("your accounts have been successfully added");
             return Results.Ok(models);
         }
         catch (Exception e)
@@ -201,7 +178,7 @@ public class EFService : IDataAccess<AccountModel>
         }
     }
 
-    private void processModelPassword(AccountModel model)
+    private void decodeModelPassword(AccountModel model)
     {
         if (model is null || model.title is null || model.username is null || model.password is null)
         {
@@ -237,7 +214,7 @@ public class EFService : IDataAccess<AccountModel>
 
             if (!String.IsNullOrEmpty(model.password))
             {
-                processModelPassword(argModel);
+                decodeModelPassword(argModel);
                 model.password = argModel.password;
                 model.aesIV = argModel.aesIV;
                 model.aesKey = argModel.aesKey;
@@ -254,7 +231,7 @@ public class EFService : IDataAccess<AccountModel>
 
             await Commit();
 
-            logger.LogInformation("Updated model");
+            logger.LogWarning("Updated model");
 
             return Results.Ok(model);
         }
@@ -264,22 +241,5 @@ public class EFService : IDataAccess<AccountModel>
             return Results.BadRequest(e.Message);
         }
     }
-
-    // public async Task<IResult> GetByTitle(string title)
-    // {
-    //     try
-    //     {
-    //         var model = await db.PasswordTableEF.FromSqlInterpolated($"select * from {nameof(db.PasswordTableEF)} where title = '{title}'").FirstOrDefaultAsync();
-
-    //         return Results.Ok(model);
-    //     }
-    //     catch (System.Exception e)
-    //     {
-    //         logger.LogError(e.Message);
-    //         return Results.BadRequest(e.Message);
-    //     }
-    // }
-
-
 
 }

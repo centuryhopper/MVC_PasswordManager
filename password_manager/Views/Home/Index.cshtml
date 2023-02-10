@@ -1,6 +1,6 @@
 ﻿@inject IHttpContextAccessor ctx
 @using PasswordManager.Models
-@model AccountModel
+@model AccountViewModel
 
 @{
     ViewData["Title"] = "Password List";
@@ -8,11 +8,12 @@
 
 <div class="text-center text-wrap">
     <h1 class="display-4">Passwords</h1>
-    <p class="text-wrap">@ViewBag.val</p>
+    <p class="text-wrap">@Model.accountModel.userId</p>
     <ul>
         <li>@ctx.HttpContext!.Session.GetString("userId")</li>
         <li>@ctx.HttpContext.Session.GetInt32("userIdInt")</li>
     </ul>
+    <i id="open" class="fa fa-eye float-right" style="margin-top: -25px; margin-right: 6px; cursor: pointer"></i>
     <section class="vh-100" style={{backgroundColor: "#eee"}}>
         <div class="container py-5 h-100">
             <div class="row d-flex justify-content-center align-items-center h-100">
@@ -23,17 +24,20 @@
                         <div class="col-12">
                             <div class="form-outline">
 
-                                @Html.TextBoxFor(m => m.title, new { @class = "form-control", id = "filterInput", placeholder = "Filter by title...", type="text", ariaLabel="title", required=true})
+                                @Html.TextBoxFor(m => m.accountModel.title, new { @class = "form-control", id = "filterInput", placeholder = "Filter by title...", type="text", ariaLabel="title", required=true})
 
-
-                                <form onSubmit={handleAdd}>
+                                @using(Html.BeginForm("AddAccount", "Home", FormMethod.Post, new {@id = "contactForm"}))
+                                {
+                                    @Html.AntiForgeryToken()
                                     <div class="input-group">
 
-                                        @Html.TextBoxFor(m => m.title, new { @class = "form-control", id = "input1", placeholder = "Enter a title...", type="text", ariaLabel="title", required=true})
+                                        @Html.TextBoxFor(m => m.accountModel.title, new { @class = "form-control", id = "input1", placeholder = "Enter a title...", type="text", ariaLabel="title", required=true})
 
-                                        @Html.TextBoxFor(m => m.username, new { @class = "form-control", id = "input2", placeholder = "Enter a username...", type="text", ariaLabel="username", required=true})
+                                        @Html.TextBoxFor(m => m.accountModel.username, new { @class = "form-control", id = "input2", placeholder = "Enter a username...", type="text", ariaLabel="username", required=true})
 
-                                        @Html.TextBoxFor(m => m.password, new { @class = "form-control", id = "input3", placeholder = "Enter a password...", type="text", ariaLabel="password", required=true})
+                                        @Html.TextBoxFor(m => m.accountModel.password, new { @class = "form-control", id = "input3", placeholder = "Enter a password...", type="text", ariaLabel="password", required=true})
+
+                                        @Html.HiddenFor(m => m.accountModel.userId)
 
                                     </div>
                                     <button
@@ -41,42 +45,83 @@
                                         class="btn btn-primary ms-1">
                                         Add account
                                     </button>
-                                </form>
-
+                                }
                             </div>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table mb-4">
-                            <thead>
-                                <tr>
-                                    <th scope="col">ID</th>
-                                    <th scope="col">Title</th>
-                                    <th scope="col">Username</th>
-                                    <th scope="col">Password</th>
-                                    <th scope="col">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @* display list of passwords associated with this account. If there are none. show a view where it tells the user there are currently no passwords *@
-                                @* {
-                                    lstOfAccounts
-                                    .filter((account: AccountType) => searchTerm === '' || searchTerm.toLowerCase().includes(account.title!))
-                                    .map((account : AccountType) =>
+                        @if (TempData["addedAccount"] is not null)
+                        {
+                            <div class="alert alert-info">@TempData["addedAccount"]</div>
+                        }
+                        else if (TempData["errorAddingAccount"] is not null)
+                        {
+                            <div class="alert alert-danger">@TempData["errorAddingAccount"]</div>
+                        }
+
+                        @if (Model.accountModels?.Count() == 0)
+                        {
+                            <p>You don't have any passwords yet. Please start adding some.</p>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table mb-4">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">ID</th>
+                                            <th scope="col">Title</th>
+                                            <th scope="col">Username</th>
+                                            <th scope="col">Password</th>
+                                            <th scope="col">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var account in Model.accountModels)
                                         {
-                                            return (<AccountTitle
-                                                key={account.id}
-                                                account={account}
-                                                lstOfAccounts={lstOfAccounts}
-                                                setLstOfAccounts={setLstOfAccounts}
-                                                handleDelete={handleDelete}
-                                                handleUpdate={handleUpdate}
-                                            />)
+                                            <tr>
+                                                <th scope="row">@account.accountId</th>
+                                                <td>@account.title</td>
+                                                <td>@account.username</td>
+                                                <td class='text-wrap' style="wordBreak: 'break-all';">
+                                                    <input
+                                                        id=@account.title
+                                                        value=@account.password
+                                                        type="password"
+                                                        readOnly
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        type="submit"
+                                                        class="btn btn-primary ms-1"
+                                                        onClick="toggleVisible(@account.title)"
+                                                    >
+                                                        Toggle
+                                                    </button>
+                                                    &nbsp;
+                                                    @* <button
+                                                        type="submit"
+                                                        class="btn btn-danger ms-1"
+                                                        onclick="handleDelete(@account.accountId)"
+                                                    >
+                                                        Delete
+                                                    </button> *@
+
+                                                    @* WHY IS IT THAT WE CANNOT PASS ACCOUNTMODEL OBJECT BACK UP? *@
+                                                    @Html.ActionLink("Delete", "Delete", "Home", new {userId=account.userId, accountId=account.accountId}, new {@class="btn btn-danger"})
+                                                    &nbsp;
+                                                    <button
+                                                        type="submit"
+                                                        class="btn btn-success"
+                                                    >
+                                                        Update
+                                                    </button>
+                                                </td>
+                                            </tr>
                                         }
-                                    )
-                                } *@
-                            </tbody>
-                            </table>
-                        </div>
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>

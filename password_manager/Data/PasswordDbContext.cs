@@ -24,6 +24,17 @@ public class PasswordDbContext : DbContext /*IdentityDbContext<IdentityUser>*/
         // modelBuilder.Entity<IdentityUserRole<string>>()
         // .HasKey(r => new { r.UserId, r.RoleId });
 
+        // TODO: add a foreign key not null constraint
+
+        modelBuilder.Entity<AccountModel>()
+        .Property<string>("userId");
+
+        modelBuilder.Entity<AccountModel>()
+            .HasOne(account => account.user)
+            .WithMany(user => user.accounts)
+            .HasForeignKey("userId")
+            .IsRequired(true);
+
     }
 
     public DbSet<AccountModel> PasswordTableEF { get; set; }
