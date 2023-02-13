@@ -1,0 +1,33 @@
+@using PasswordManager.Models
+@model AccountModel
+
+
+@using(Html.BeginForm("Edit", "Home", FormMethod.Post, new {@id = "editForm"}))
+{
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="form-group">
+        @Html.HiddenFor(m => m.accountId)
+        @Html.HiddenFor(m => m.userId)
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.title, new {@class="form-label"})
+        @Html.TextBoxFor(m => m.title, new { @class = "form-control", id = "edit1", placeholder = $"please enter a new title. Old title: {Model.title}", type="text", value="" })
+        @Html.ValidationMessageFor(m => m.title, "", new { @class = "text-danger" })
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.username, new {@class="form-label"})
+        @Html.TextBoxFor(m => m.username, new { @class = "form-control", id = "edit2", placeholder = $"please enter a new username. Old username: {Model.username}", type="text" })
+        @Html.ValidationMessageFor(m => m.username, "", new { @class = "text-danger" })
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.password, new {@class="form-label"})
+        @Html.TextAreaFor(m => m.password, new { @class = "form-control", id = "edit3", placeholder = $"please enter a new password. Old password: {Model.password}", type="password" })
+        @Html.ValidationMessageFor(m => m.password, "", new { @class = "text-danger" })
+    </div>
+    <div class="modal-footer">
+        @Html.ActionLink("Close", "Index", "Home", new {val=Model.userId}, new {@class="btn btn-dark"})
+        <input id="submitButton" type="submit" value="Save" class="btn btn-primary" />
+    </div>
+}
+

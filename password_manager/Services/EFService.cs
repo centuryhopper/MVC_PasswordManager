@@ -73,6 +73,23 @@ public class EFService : IDataAccess<AccountModel>
         }
     }
 
+    public async Task<IEnumerable<AccountModel>> FilterBy(string userId, string title)
+    {
+        try
+        {
+            var models = await db.PasswordTableEF.Where(acc => acc.userId == userId).Where(acc => string.IsNullOrEmpty(title) ? true : acc.title == title).OrderBy(acc => acc.title).ToListAsync();
+
+            models.ForEach(model => model.password = SymmetricEncryptionHandler.DecryptStringFromBytes_Aes(Convert.FromBase64String(model.password!), Convert.FromBase64String(model.aesKey!), Convert.FromBase64String(model.aesIV!)));
+
+            return models;
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e.Message);
+            return null!;
+        }
+    }
+
     /// <summary>
     /// post an account into the db
     /// </summary>
@@ -89,7 +106,7 @@ public class EFService : IDataAccess<AccountModel>
                 throw new Exception("not all fields have been properly assigned for your model");
             }
 
-            decodeModelPassword(model);
+            encodeModelPassword(model);
             model.accountId = Guid.NewGuid().ToString();
             DateTime myDate = DateTime.ParseExact(
                 DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
@@ -150,7 +167,7 @@ public class EFService : IDataAccess<AccountModel>
         {
             models.ForEach((model) =>
             {
-                decodeModelPassword(model);
+                encodeModelPassword(model);
                 model.accountId = Guid.NewGuid().ToString();
                 DateTime myDate = DateTime.ParseExact(
                     DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
@@ -178,7 +195,7 @@ public class EFService : IDataAccess<AccountModel>
         }
     }
 
-    private void decodeModelPassword(AccountModel model)
+    private void encodeModelPassword(AccountModel model)
     {
         if (model is null || model.title is null || model.username is null || model.password is null)
         {
@@ -214,7 +231,7 @@ public class EFService : IDataAccess<AccountModel>
 
             if (!String.IsNullOrEmpty(model.password))
             {
-                decodeModelPassword(argModel);
+                encodeModelPassword(argModel);
                 model.password = argModel.password;
                 model.aesIV = argModel.aesIV;
                 model.aesKey = argModel.aesKey;
@@ -239,6 +256,23 @@ public class EFService : IDataAccess<AccountModel>
         {
             logger.LogError("Unable to update model :(");
             return Results.BadRequest(e.Message);
+        }
+    }
+
+    public async Task<AccountModel?> GetOne(string accountId)
+    {
+        try
+        {
+            var model = await db.PasswordTableEF.FindAsync(accountId);
+
+            model!.password = SymmetricEncryptionHandler.DecryptStringFromBytes_Aes(Convert.FromBase64String(model.password!), Convert.FromBase64String(model.aesKey!), Convert.FromBase64String(model.aesIV!));
+
+            return model;
+        }
+        catch(Exception e)
+        {
+            logger.LogError(e.Message);
+            return null!;
         }
     }
 

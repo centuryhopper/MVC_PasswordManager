@@ -24,8 +24,6 @@ public class PasswordDbContext : DbContext /*IdentityDbContext<IdentityUser>*/
         // modelBuilder.Entity<IdentityUserRole<string>>()
         // .HasKey(r => new { r.UserId, r.RoleId });
 
-        // TODO: add a foreign key not null constraint
-
         modelBuilder.Entity<AccountModel>()
         .Property<string>("userId");
 

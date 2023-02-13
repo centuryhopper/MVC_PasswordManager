@@ -8,124 +8,96 @@
 
 <div class="text-center text-wrap">
     <h1 class="display-4">Passwords</h1>
-    <p class="text-wrap">@Model.accountModel.userId</p>
+    @* <p class="text-wrap">@Model.accountModel.userId</p>
     <ul>
         <li>@ctx.HttpContext!.Session.GetString("userId")</li>
         <li>@ctx.HttpContext.Session.GetInt32("userIdInt")</li>
-    </ul>
-    <i id="open" class="fa fa-eye float-right" style="margin-top: -25px; margin-right: 6px; cursor: pointer"></i>
-    <section class="vh-100" style={{backgroundColor: "#eee"}}>
+    </ul> *@
+    <section class="vh-100" style="background-color: "#eee";">
         <div class="container py-5 h-100">
             <div class="row d-flex justify-content-center align-items-center h-100">
-            <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
-                <div class="card rounded-3">
-                    <div class="card-body p-4">
-                        <h4 class="text-center my-3 pb-3">Password database query</h4>
-                        <div class="col-12">
-                            <div class="form-outline">
+                <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+                    <div class="card rounded-3">
+                        <div class="card-body p-4">
+                            <h4 class="text-center my-3 pb-3">Password database query</h4>
+                            <div class="col-12">
+                                <div class="form-outline">
 
-                                @Html.TextBoxFor(m => m.accountModel.title, new { @class = "form-control", id = "filterInput", placeholder = "Filter by title...", type="text", ariaLabel="title", required=true})
+                                    @Html.TextBoxFor(m => m.accountModel.title, new { @class = "form-control", id = "filterInput", placeholder = "Filter by title...", type="text", ariaLabel="title", required=true})
 
-                                @using(Html.BeginForm("AddAccount", "Home", FormMethod.Post, new {@id = "contactForm"}))
-                                {
-                                    @Html.AntiForgeryToken()
-                                    <div class="input-group">
+                                    @using(Html.BeginForm("AddAccount", "Home", FormMethod.Post, new {@id = "contactForm"}))
+                                    {
+                                        @Html.AntiForgeryToken()
+                                        <div class="input-group">
 
-                                        @Html.TextBoxFor(m => m.accountModel.title, new { @class = "form-control", id = "input1", placeholder = "Enter a title...", type="text", ariaLabel="title", required=true})
+                                            @Html.TextBoxFor(m => m.accountModel.title, new { @class = "form-control", id = "input1", placeholder = "Enter a title...", type="text", ariaLabel="title", required=true})
 
-                                        @Html.TextBoxFor(m => m.accountModel.username, new { @class = "form-control", id = "input2", placeholder = "Enter a username...", type="text", ariaLabel="username", required=true})
+                                            @Html.TextBoxFor(m => m.accountModel.username, new { @class = "form-control", id = "input2", placeholder = "Enter a username...", type="text", ariaLabel="username", required=true})
 
-                                        @Html.TextBoxFor(m => m.accountModel.password, new { @class = "form-control", id = "input3", placeholder = "Enter a password...", type="text", ariaLabel="password", required=true})
+                                            @Html.TextBoxFor(m => m.accountModel.password, new { @class = "form-control", id = "input3", placeholder = "Enter a password...", type="text", ariaLabel="password", required=true})
 
-                                        @Html.HiddenFor(m => m.accountModel.userId)
+                                            @Html.HiddenFor(m => m.accountModel.userId)
 
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        class="btn btn-primary ms-1">
-                                        Add account
-                                    </button>
-                                }
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            class="btn btn-primary ms-1">
+                                            Add account
+                                        </button>
+                                    }
+                                </div>
                             </div>
+                            @if (TempData["addedAccount"] is not null)
+                            {
+                                <div class="alert alert-info">@TempData["addedAccount"]</div>
+                            }
+                            else if (TempData["errorAddingAccount"] is not null)
+                            {
+                                <div class="alert alert-danger">@TempData["errorAddingAccount"]</div>
+                            }
+                            @if (Model.accountModels?.Count() == 0)
+                            {
+                                <p>You don't have any passwords yet. Please start adding some.</p>
+                            }
+                            else
+                            {
+                                <div id="accountListView"></div>
+                            }
                         </div>
-                        @if (TempData["addedAccount"] is not null)
-                        {
-                            <div class="alert alert-info">@TempData["addedAccount"]</div>
-                        }
-                        else if (TempData["errorAddingAccount"] is not null)
-                        {
-                            <div class="alert alert-danger">@TempData["errorAddingAccount"]</div>
-                        }
-
-                        @if (Model.accountModels?.Count() == 0)
-                        {
-                            <p>You don't have any passwords yet. Please start adding some.</p>
-                        }
-                        else
-                        {
-                            <div class="table-responsive">
-                                <table class="table mb-4">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">ID</th>
-                                            <th scope="col">Title</th>
-                                            <th scope="col">Username</th>
-                                            <th scope="col">Password</th>
-                                            <th scope="col">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var account in Model.accountModels)
-                                        {
-                                            <tr>
-                                                <th scope="row">@account.accountId</th>
-                                                <td>@account.title</td>
-                                                <td>@account.username</td>
-                                                <td class='text-wrap' style="wordBreak: 'break-all';">
-                                                    <input
-                                                        id=@account.title
-                                                        value=@account.password
-                                                        type="password"
-                                                        readOnly
-                                                    />
-                                                </td>
-                                                <td>
-                                                    <button
-                                                        type="submit"
-                                                        class="btn btn-primary ms-1"
-                                                        onClick="toggleVisible(@account.title)"
-                                                    >
-                                                        Toggle
-                                                    </button>
-                                                    &nbsp;
-                                                    @* <button
-                                                        type="submit"
-                                                        class="btn btn-danger ms-1"
-                                                        onclick="handleDelete(@account.accountId)"
-                                                    >
-                                                        Delete
-                                                    </button> *@
-
-                                                    @* WHY IS IT THAT WE CANNOT PASS ACCOUNTMODEL OBJECT BACK UP? *@
-                                                    @Html.ActionLink("Delete", "Delete", "Home", new {userId=account.userId, accountId=account.accountId}, new {@class="btn btn-danger"})
-                                                    &nbsp;
-                                                    <button
-                                                        type="submit"
-                                                        class="btn btn-success"
-                                                    >
-                                                        Update
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        }
                     </div>
                 </div>
-            </div>
             </div>
         </div>
     </section>
 </div>
+
+
+
+@section Scripts
+{
+    <script>
+        $(() => {
+            getUsers()
+
+            // responsive filtering from this code snippet
+            $('#filterInput').on('keyup', () => {
+                getUsers()
+            })
+        })
+        var getUsers = () => {
+            $.ajax({
+                url: '@Url.Action("FilterAccounts", "Home")',
+                datatype: 'html',
+                method: 'GET',
+                data: {filterTerm: $('#filterInput').val()},
+                success: (res) => {
+                    $('#accountListView').html('').html(res)
+                },
+                error: (err) => {
+                    console.log(err)
+                }
+            })
+        }
+    </script>
+}
+

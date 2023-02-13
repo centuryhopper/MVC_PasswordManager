@@ -9,4 +9,6 @@ public interface IDataAccess<T>
     Task<IResult> Put(T model);
     Task<T> Delete(string id);
     Task<int> Commit();
+    Task<T?> GetOne(string accountId);
+    Task<IEnumerable<T>> FilterBy(string userId, string title);
 }

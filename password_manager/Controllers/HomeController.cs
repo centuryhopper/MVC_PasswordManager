@@ -16,7 +16,6 @@ public class HomeController : Controller
     private readonly IHttpContextAccessor ctx;
     private readonly IDataAccess<AccountModel> dataAccess;
 
-
     public HomeController(ILogger<HomeController> logger, IHttpContextAccessor ctx, IDataAccess<AccountModel> dataAccess)
     {
         this.logger = logger;
@@ -41,7 +40,7 @@ public class HomeController : Controller
                 accountModels = lst as List<AccountModel>,
                 accountModel = accountModel
             };
-            ctx.HttpContext!.Session.SetString(SessionVariables.userId, "this userId is from the session state");
+            ctx.HttpContext!.Session.SetString(SessionVariables.userId, val);
             ctx.HttpContext.Session.SetInt32(SessionVariables.userIdInt, 100);
             return View(accountViewModel);
         }
@@ -70,9 +69,33 @@ public class HomeController : Controller
     // Cannot pass model back up for some reason
     public async Task<ActionResult> Delete(string userId, string accountId)
     {
+        // TODO: make into try catch structure (delete)
         var model = await dataAccess.Delete(accountId);
         logger.LogWarning("deleted model with id");
         return RedirectToAction("Index", "Home", new {val=userId});
+    }
+
+    public async Task<ActionResult> Edit(string userId, string accountId)
+    {
+        // TODO: make into try catch structure (update)
+        var model = await dataAccess.GetOne(accountId);
+        logger.LogWarning(userId);
+        return View(model);
+    }
+
+    // get by default so the header really isn't needed but shown for clarity
+    [HttpGet]
+    public async Task<PartialViewResult> FilterAccounts(string filterTerm)
+    {
+        var userId = ctx.HttpContext!.Session.GetString(SessionVariables.userId)!;
+        return PartialView("_AccountsListView", await dataAccess.FilterBy(userId, filterTerm));
+    }
+
+    [HttpPost]
+    public async Task<ActionResult> Edit(AccountModel model)
+    {
+        await dataAccess.Put(model);
+        return RedirectToAction("Index", "Home", new {val=model.userId});
     }
 
     public async Task LogOut()

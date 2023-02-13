@@ -12,21 +12,21 @@ var toggleVisible = (id) =>
     }
 }
 
-var handleDelete = (id) =>
-{
-    $.ajax({
-        url: `Home/Delete/${id}`,
-        type: 'DELETE',
-        // data: {
-        //     id: id
-        // },
-        success: () =>
-        {
-            window.location.reload()
-        },
-        error: (err) =>
-        {
-            console.log(err)
-        }
-    })
-}
+// var handleDelete = (id) =>
+// {
+//     $.ajax({
+//         url: `Home/Delete/${id}`,
+//         type: 'DELETE',
+//         // data: {
+//         //     id: id
+//         // },
+//         success: () =>
+//         {
+//             window.location.reload()
+//         },
+//         error: (err) =>
+//         {
+//             console.log(err)
+//         }
+//     })
+// }
