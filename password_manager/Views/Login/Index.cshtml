@@ -3,6 +3,9 @@
 @{
     ViewData["Title"] = "Login";
     Layout = "_LoginSignUpLayout";
+
+    var userNameFieldId = "login_input1";
+    var passwordFieldId = "login_input2";
 }
 
 <h1 class="text-center">Log in</h1>
@@ -12,20 +15,21 @@
     <div class="alert alert-danger">@TempData["sessionExpired"]</div>
 }
 
-@using(Html.BeginForm("Login", "Login", FormMethod.Post, new {@id = "contactForm"}))
-{
+<form id="contactForm" method="post" action="@Url.Action("Login", "Login")">
     @Html.AntiForgeryToken()
 
     <div class="form-outline mb-4">
-        @Html.LabelFor(m => m.username, new {@class="form-label"})
-        @Html.TextBoxFor(m => m.username, new { @class = "form-control", id = "input1", placeholder = "Username", type="text" })
-        @Html.ValidationMessageFor(m => m.username, "", new { @class = "text-danger" })
+        <label for=@userNameFieldId class="form-label">Username</label>
+        <input asp-for="username" id=@userNameFieldId type="text" name="username" class="form-control" placeholder="Username" />
+        <span asp-validation-for="username" class="text-danger"></span>
     </div>
 
     <div class="form-outline mb-4">
-        @Html.LabelFor(m => m.password, new {@class="form-label"})
-        @Html.TextBoxFor(m => m.password, new { @class = "form-control", id = "input1", placeholder = "Password", type="password" })
-        @Html.ValidationMessageFor(m => m.password, "", new { @class = "text-danger" })
+        <label for=@passwordFieldId class="form-label">Password</label>
+        <i id="@("open"+passwordFieldId)" class="fa-solid fa-eye" style="display: none;" onclick="toggleVisible('@passwordFieldId')"></i>
+        <i id="@("close"+passwordFieldId)" class="fa-solid fa-eye-slash" onclick="toggleVisible('@passwordFieldId')"></i>
+        <input asp-for="password" id=@passwordFieldId type="password" name="password" class="form-control" placeholder="Password"/>
+        <span asp-validation-for="password" class="text-danger"></span>
     </div>
 
     <input id="submitButton" type="submit" value="Log in" class="btn btn-primary" />
@@ -33,13 +37,12 @@
     <div class="text-center">
         <p>Don't have an account? @Html.ActionLink("Sign up", "Index", "Register")</p>
     </div>
-}
+</form>
 
 @if (TempData["incorrectLogin"] is not null)
 {
     <div class="alert alert-danger">@TempData["incorrectLogin"]</div>
 }
-
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

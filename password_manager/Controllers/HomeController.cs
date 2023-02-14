@@ -75,25 +75,26 @@ public class HomeController : Controller
         return RedirectToAction("Index", "Home", new {val=userId});
     }
 
-    public async Task<PartialViewResult> Edit(string accountId)
+    public async Task<PartialViewResult> Edit(string accountId, int idx)
     {
+        // logger.LogWarning($"edit partial: {accountId}");
         var model = await dataAccess.GetOne(accountId);
-        return PartialView("_Edit", model);
+        return PartialView("_Edit", new EditViewModel {accountModel = model!, editIdx = idx});
     }
 
     [HttpPost]
-    public async Task<ActionResult> Edit(AccountModel model)
+    public async Task<ActionResult> Edit(EditViewModel model)
     {
-        if (string.IsNullOrEmpty(model.title) || string.IsNullOrEmpty(model.username) || string.IsNullOrEmpty(model.password) ||
-        string.IsNullOrWhiteSpace(model.title) || string.IsNullOrWhiteSpace(model.username) || string.IsNullOrWhiteSpace(model.password))
+        if (string.IsNullOrEmpty(model.accountModel.title) || string.IsNullOrEmpty(model.accountModel.username) || string.IsNullOrEmpty(model.accountModel.password) ||
+        string.IsNullOrWhiteSpace(model.accountModel.title) || string.IsNullOrWhiteSpace(model.accountModel.username) || string.IsNullOrWhiteSpace(model.accountModel.password))
         {
             logger.LogWarning("all fields should not be empty");
             TempData["editError"] = "Please make sure you have entered all the proper fields when editing your password account.";
-            return RedirectToAction("Index", "Home", new {val=model.userId});
+            return RedirectToAction("Index", "Home", new {val=model.accountModel.userId});
         }
 
-        await dataAccess.Put(model);
-        return RedirectToAction("Index", "Home", new {val=model.userId});
+        await dataAccess.Put(model.accountModel);
+        return RedirectToAction("Index", "Home", new {val=model.accountModel.userId});
     }
 
     // get by default so the header really isn't needed but shown for clarity

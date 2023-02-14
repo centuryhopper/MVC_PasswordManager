@@ -43,17 +43,16 @@ else
                                 Delete <i class="fa fa-trash"></i>
                             </a>
 
-
                             <button
                                 type="button"
                                 class="btn btn-success"
                                 data-toggle="modal"
                                 data-target="@("#EditProduct-"+account.accountId)"
-                                data-url="@Url.Action($"Edit/{account.accountId}")">
+                                data-url="@Url.Action("Edit", "Home", new {accountId=account.accountId, idx=idx})">
                                 Edit
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
-                            @await Html.PartialAsync("_Edit", account)
+                            @await Html.PartialAsync("_Edit", new EditViewModel {accountModel = account, editIdx = idx})
                         </td>
                     </tr>
                 }

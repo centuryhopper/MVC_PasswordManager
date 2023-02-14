@@ -9,17 +9,19 @@ $(() => {
 
 var toggleVisible = (id) =>
 {
+    // console.log(typeof(id))
+    // console.log(id)
     let passwordInput = document.getElementById(id);
     let openEye = document.getElementById("open"+id)
     let closeEye = document.getElementById("close"+id)
 
     if (passwordInput.type === "password") {
         passwordInput.type = "text";
-        openEye.style.display = "block"
+        openEye.style.display = "inline"
         closeEye.style.display = "none"
     } else {
         passwordInput.type = "password";
         openEye.style.display = "none"
-        closeEye.style.display = "block"
+        closeEye.style.display = "inline"
     }
 }

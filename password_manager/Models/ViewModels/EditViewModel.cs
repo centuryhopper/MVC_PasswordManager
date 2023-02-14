@@ -1,8 +1,8 @@
 namespace PasswordManager.Models;
 
-public class AccountViewModel
+public class EditViewModel
 {
-    public List<AccountModel> accountModels { get; set; } = null!;
+    public int editIdx { get; set; }
     public AccountModel accountModel { get; set; } = null!;
 }
 

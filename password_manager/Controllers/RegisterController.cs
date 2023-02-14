@@ -36,6 +36,8 @@ namespace password_manager.Controllers
                 return RedirectToAction("Index", "Login");
             }
 
+            TempData["userAlreadyExists"] = "This user already exists. Please try a different username.";
+
             return RedirectToAction("Index");
         }
     }

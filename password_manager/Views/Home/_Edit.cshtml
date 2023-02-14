@@ -1,8 +1,12 @@
 @using PasswordManager.Models
-@model AccountModel
+@model EditViewModel
 
-@* TODO: add show/hide option for passwords *@
-<div class="modal fade" id="EditProduct-@Model.accountId" tabindex="-1" role="dialog" aria-labelledby="EditProductLabel" aria-hidden="true">
+@{
+  string passwordInputId = "editPassword" + Model.editIdx;
+
+}
+
+<div class="modal fade" id="EditProduct-@Model.accountModel.accountId" tabindex="-1" role="dialog" aria-labelledby="EditProductLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -16,28 +20,31 @@
             @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
-                @Html.HiddenFor(m => m.accountId)
-                @Html.HiddenFor(m => m.userId)
+                @Html.HiddenFor(m => m.accountModel.accountId)
+                @Html.HiddenFor(m => m.accountModel.userId)
             </div>
             <div class="form-group">
                 <label for="title" class="form-label">Title</label>
-                <input asp-for="title" id="edit1" class="form-control" placeholder="please enter a new title. Old title: @Model.title" type="text" value="@Model.title" required>
-                <span asp-validation-for="title" class="text-danger"></span>
+                <input asp-for="@Model.accountModel.title" id="edit1" class="form-control" placeholder="please enter a new title. Old title: @Model.accountModel.title" type="text" value="@Model.accountModel.title">
+                <span asp-validation-for="@Model.accountModel.title" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label for="username" class="form-label">Username</label>
-                <input asp-for="username" id="edit2" class="form-control" placeholder="please enter a new username. Old username: @Model.username" type="text" value="@Model.username" required>
-                <span asp-validation-for="username" class="text-danger"></span>
+                <input asp-for="@Model.accountModel.username" id="edit2" class="form-control" placeholder="please enter a new username. Old username: @Model.accountModel.username" type="text" value="@Model.accountModel.username">
+                <span asp-validation-for="@Model.accountModel.username" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label for="password" class="form-label">Password</label>
-                <input asp-for="password"
-                    id="editPassword"
-                    class="form-control" placeholder="please enter a new password. Old password: @Model.password"
-                    type="password" value="@Model.password" required>
-                <span asp-validation-for="password" class="text-danger"></span>
-                <i id="@("open"+"editPassword")" class="fa-solid fa-eye" style="display: none;" onclick="toggleVisible('editPassword')"></i>
-                <i id="@("close"+"editPassword")" class="fa-solid fa-eye-slash" onclick="toggleVisible('editPassword')"></i>
+
+                <input
+                    asp-for="@Model.accountModel.password"
+                    id="@passwordInputId"
+                    class="form-control" placeholder="please enter a new password. Old password: @Model.accountModel.password"
+                    type="password"
+                    value="@Model.accountModel.password">
+                <span asp-validation-for="@Model.accountModel.password" class="text-danger"></span>
+                <i id="@("open"+passwordInputId)" class="fa-solid fa-eye" style="display: none;" onclick="toggleVisible('@passwordInputId')"></i>
+                <i id="@("close"+passwordInputId)" class="fa-solid fa-eye-slash" onclick="toggleVisible('@passwordInputId')"></i>
             </div>
         </form>
       </div>
@@ -49,3 +56,6 @@
   </div>
 </div>
 
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

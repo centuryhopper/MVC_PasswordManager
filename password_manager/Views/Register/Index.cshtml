@@ -3,24 +3,33 @@
 @{
     ViewData["Title"] = "Register";
     Layout = "_LoginSignUpLayout";
+
+    var userNameFieldId = "register_input1";
+    var passwordFieldId = "register_input2";
 }
 
 <h1 class="text-center">Create an Account</h1>
 
-@using(Html.BeginForm("Register", "Register", FormMethod.Post, new {@id = "contactForm"}))
+@if (TempData["userAlreadyExists"] is not null)
 {
+    <div class="alert alert-danger">@TempData["userAlreadyExists"]</div>
+}
+
+<form id="contactFormRegister" method="post" action="@Url.Action("Register", "Register")">
     @Html.AntiForgeryToken()
 
     <div class="form-outline mb-4">
-        @Html.LabelFor(m => m.username, new {@class="form-label"})
-        @Html.TextBoxFor(m => m.username, new { @class = "form-control", id = "input1", placeholder = "Username", type="text" })
-        @Html.ValidationMessageFor(m => m.username, "", new { @class = "text-danger" })
+        <label for=@userNameFieldId class="form-label">Username</label>
+        <input asp-for="username" id=@userNameFieldId type="text" name="username" class="form-control" placeholder="Username" />
+        <span asp-validation-for="username" class="text-danger"></span>
     </div>
 
     <div class="form-outline mb-4">
-        @Html.LabelFor(m => m.password, new {@class="form-label"})
-        @Html.TextBoxFor(m => m.password, new { @class = "form-control", id = "input1", placeholder = "Password", type="password" })
-        @Html.ValidationMessageFor(m => m.password, "", new { @class = "text-danger" })
+        <label for=@passwordFieldId class="form-label">Password</label>
+        <i id="@("open"+passwordFieldId)" class="fa-solid fa-eye" style="display: none;" onclick="toggleVisible('@passwordFieldId')"></i>
+        <i id="@("close"+passwordFieldId)" class="fa-solid fa-eye-slash" onclick="toggleVisible('@passwordFieldId')"></i>
+        <input asp-for="password" id=@passwordFieldId type="password" name="password" class="form-control" placeholder="Password"/>
+        <span asp-validation-for="password" class="text-danger"></span>
     </div>
 
     <input id="submitButton" type="submit" value="Sign up" class="btn btn-primary" />
@@ -28,8 +37,7 @@
     <div class="text-center">
     <p>Already have an account? @Html.ActionLink("Log in", "Index", "Login")</p>
     </div>
-}
-
+</form>
 
 
 @section Scripts {
