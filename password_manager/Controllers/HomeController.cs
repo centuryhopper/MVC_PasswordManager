@@ -75,12 +75,25 @@ public class HomeController : Controller
         return RedirectToAction("Index", "Home", new {val=userId});
     }
 
-    public async Task<ActionResult> Edit(string userId, string accountId)
+    public async Task<PartialViewResult> Edit(string accountId)
     {
-        // TODO: make into try catch structure (update)
         var model = await dataAccess.GetOne(accountId);
-        logger.LogWarning(userId);
-        return View(model);
+        return PartialView("_Edit", model);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult> Edit(AccountModel model)
+    {
+        if (string.IsNullOrEmpty(model.title) || string.IsNullOrEmpty(model.username) || string.IsNullOrEmpty(model.password) ||
+        string.IsNullOrWhiteSpace(model.title) || string.IsNullOrWhiteSpace(model.username) || string.IsNullOrWhiteSpace(model.password))
+        {
+            logger.LogWarning("all fields should not be empty");
+            TempData["editError"] = "Please make sure you have entered all the proper fields when editing your password account.";
+            return RedirectToAction("Index", "Home", new {val=model.userId});
+        }
+
+        await dataAccess.Put(model);
+        return RedirectToAction("Index", "Home", new {val=model.userId});
     }
 
     // get by default so the header really isn't needed but shown for clarity
@@ -89,13 +102,6 @@ public class HomeController : Controller
     {
         var userId = ctx.HttpContext!.Session.GetString(SessionVariables.userId)!;
         return PartialView("_AccountsListView", await dataAccess.FilterBy(userId, filterTerm));
-    }
-
-    [HttpPost]
-    public async Task<ActionResult> Edit(AccountModel model)
-    {
-        await dataAccess.Put(model);
-        return RedirectToAction("Index", "Home", new {val=model.userId});
     }
 
     public async Task LogOut()

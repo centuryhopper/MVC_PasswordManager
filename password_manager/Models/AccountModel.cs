@@ -14,13 +14,13 @@ public class AccountModel
     public string? userId {get; set;}
     public UserModel user {get; set;}
 
-    [Required, StringLength(32)]
+    [Required(ErrorMessage="Title is required"), StringLength(32), Display(Name="Title: ")]
     public string? title { get; set; }
 
-    [Required, StringLength(32)]
+    [Required(ErrorMessage="Username is required"), StringLength(32), Display(Name="Username: ")]
     public string? username { get; set; }
 
-    [Required, StringLength(512)]
+    [Required(ErrorMessage="Password is required"), StringLength(512), Display(Name="Password: ")]
     public string? password { get; set; }
     public string? aesKey { get; set; }
     public string? aesIV { get; set; }

@@ -19,38 +19,41 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (var account in Model)
+                @foreach (var (account, idx) in Model.Select((account, i) => (account, i)))
                 {
                     <tr>
                         <th scope="row">@account.accountId</th>
                         <td>@account.title</td>
                         <td>@account.username</td>
                         <td class='text-wrap' style="wordBreak: 'break-all';">
-                            <input
-                                id=@account.title
-                                value=@account.password
-                                type="password"
-                                readOnly
-                            />
+                            <div class="position-relative">
+                                <input id="@idx" value="@account.password" type="password" readonly />
+                                <i id="@("open"+idx)" class="fa-solid fa-eye position-absolute top-50 end-0 translate-middle-y" style="display: none;" onclick="toggleVisible(@idx)"></i>
+                                <i id="@("close"+idx)"class="fa-solid fa-eye-slash position-absolute top-50 end-0 translate-middle-y" onclick="toggleVisible(@idx)"></i>
+                            </div>
                         </td>
                         <td>
-                            <button
-                                type="submit"
-                                class="btn btn-primary ms-1"
-                                onClick="toggleVisible(@account.title)"
-                            >
-                                Toggle
-                            </button>
 
                             @* WHY IS IT THAT WE CANNOT PASS ACCOUNTMODEL OBJECT BACK UP? *@
-                            @Html.ActionLink("Delete", "Delete", "Home", new {userId=account.userId, accountId=account.accountId}, new {
-                                @class="btn btn-danger",
-                                onClick="return confirm('Are you sure you want to delete this password account?')"
-                            })
+                            <a
+                                href="@Url.Action("Delete", "Home", new { userId = account.userId, accountId = account.accountId })"
+                                class="btn btn-danger"
+                                onclick="return confirm('Are you sure you want to delete this password account?')"
+                            >
+                                Delete <i class="fa fa-trash"></i>
+                            </a>
 
 
-                            @Html.ActionLink("Edit", "Edit", "Home", new {accountId=account.accountId, userId=account.userId}, new {@class="btn btn-warning"})
-
+                            <button
+                                type="button"
+                                class="btn btn-success"
+                                data-toggle="modal"
+                                data-target="@("#EditProduct-"+account.accountId)"
+                                data-url="@Url.Action($"Edit/{account.accountId}")">
+                                Edit
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            @await Html.PartialAsync("_Edit", account)
                         </td>
                     </tr>
                 }

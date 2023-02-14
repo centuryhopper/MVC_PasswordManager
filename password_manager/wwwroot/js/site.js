@@ -2,31 +2,24 @@
 // for details on configuring this project to bundle and minify static web assets.
 
 // Write your JavaScript code.
+$(() => {
+
+})
+
+
 var toggleVisible = (id) =>
 {
-    var passwordInput = document.getElementById(id);
+    let passwordInput = document.getElementById(id);
+    let openEye = document.getElementById("open"+id)
+    let closeEye = document.getElementById("close"+id)
+
     if (passwordInput.type === "password") {
         passwordInput.type = "text";
+        openEye.style.display = "block"
+        closeEye.style.display = "none"
     } else {
         passwordInput.type = "password";
+        openEye.style.display = "none"
+        closeEye.style.display = "block"
     }
 }
-
-// var handleDelete = (id) =>
-// {
-//     $.ajax({
-//         url: `Home/Delete/${id}`,
-//         type: 'DELETE',
-//         // data: {
-//         //     id: id
-//         // },
-//         success: () =>
-//         {
-//             window.location.reload()
-//         },
-//         error: (err) =>
-//         {
-//             console.log(err)
-//         }
-//     })
-// }

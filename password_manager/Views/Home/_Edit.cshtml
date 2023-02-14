@@ -1,0 +1,51 @@
+@using PasswordManager.Models
+@model AccountModel
+
+@* TODO: add show/hide option for passwords *@
+<div class="modal fade" id="EditProduct-@Model.accountId" tabindex="-1" role="dialog" aria-labelledby="EditProductLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="title-label">Edit Password Account</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm" action="/Home/Edit" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                @Html.HiddenFor(m => m.accountId)
+                @Html.HiddenFor(m => m.userId)
+            </div>
+            <div class="form-group">
+                <label for="title" class="form-label">Title</label>
+                <input asp-for="title" id="edit1" class="form-control" placeholder="please enter a new title. Old title: @Model.title" type="text" value="@Model.title" required>
+                <span asp-validation-for="title" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label for="username" class="form-label">Username</label>
+                <input asp-for="username" id="edit2" class="form-control" placeholder="please enter a new username. Old username: @Model.username" type="text" value="@Model.username" required>
+                <span asp-validation-for="username" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input asp-for="password"
+                    id="editPassword"
+                    class="form-control" placeholder="please enter a new password. Old password: @Model.password"
+                    type="password" value="@Model.password" required>
+                <span asp-validation-for="password" class="text-danger"></span>
+                <i id="@("open"+"editPassword")" class="fa-solid fa-eye" style="display: none;" onclick="toggleVisible('editPassword')"></i>
+                <i id="@("close"+"editPassword")" class="fa-solid fa-eye-slash" onclick="toggleVisible('editPassword')"></i>
+            </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="submitForm()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
