@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using PasswordManager.Models;
 using PasswordManager.Services;
+using PasswordManager.Utils;
 // using System.Web.Mvc;
 
 namespace password_manager.Controllers
@@ -60,6 +61,7 @@ namespace password_manager.Controllers
 
             if (ModelState.IsValid && !string.IsNullOrEmpty(val))
             {
+                ctx.HttpContext!.Session.SetString(SessionVariables.userId, val);
                 return RedirectToAction("Index", "Home", new {val=val});
             }
 

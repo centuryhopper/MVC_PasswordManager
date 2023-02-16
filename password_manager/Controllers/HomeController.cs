@@ -30,7 +30,12 @@ public class HomeController : Controller
 
         if (ctx.HttpContext!.User.Identity!.IsAuthenticated)
         {
-            var lst = await dataAccess.Get(val);
+            if (!string.IsNullOrEmpty(val))
+            {
+                ctx.HttpContext!.Session.SetString(SessionVariables.userId, val);
+            }
+
+            var lst = await dataAccess.Get(ctx.HttpContext!.Session.GetString(SessionVariables.userId)!);
             var accountModel = new AccountModel
             {
                 userId = val
@@ -40,8 +45,6 @@ public class HomeController : Controller
                 accountModels = lst as List<AccountModel>,
                 accountModel = accountModel
             };
-            ctx.HttpContext!.Session.SetString(SessionVariables.userId, val);
-            ctx.HttpContext.Session.SetInt32(SessionVariables.userIdInt, 100);
             return View(accountViewModel);
         }
 
@@ -70,9 +73,17 @@ public class HomeController : Controller
     public async Task<ActionResult> Delete(string userId, string accountId)
     {
         // TODO: make into try catch structure (delete)
-        var model = await dataAccess.Delete(accountId);
-        logger.LogWarning("deleted model with id");
+        try{
+            var model = await dataAccess.Delete(accountId);
+            logger.LogWarning("deleted model with id");
+        }
+        catch (Exception e)
+        {
+            logger.LogError($"encountered an issue with deleting: {e.Message}");
+        }
+
         return RedirectToAction("Index", "Home", new {val=userId});
+
     }
 
     public async Task<PartialViewResult> Edit(string accountId, int idx)

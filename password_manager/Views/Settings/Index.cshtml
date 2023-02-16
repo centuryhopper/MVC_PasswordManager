@@ -1,0 +1,19 @@
+@inject IHttpContextAccessor ctx
+@using PasswordManager.Utils
+
+@{
+    ViewData["Title"] = "Settings";
+}
+
+<div class="text-center">
+    <p>@(ctx.HttpContext!.Session.GetString(SessionVariables.userId) ?? "NULL")</p>
+    <div class="list-group">
+        <a
+            class="list-group-item list-group-item-action text-danger"
+            href="@Url.Action("DeleteAccount", "Settings", new {})"
+            onclick="return confirm('Are you sure you want to delete your account? All your passwords will be lost and cannot be recovered!')">
+            Delete account
+        </a>
+    </div>
+</div>
+

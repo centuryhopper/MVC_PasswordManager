@@ -33,6 +33,30 @@ public class AuthenticationService : IAuthenticationService<UserModel>
         return await db.SaveChangesAsync();
     }
 
+    public async Task<UserModel> Delete(string userId)
+    {
+        try
+        {
+            // should never be null if we're only calling this when the user is signed in
+            var model = await db.UserTableEF.FirstOrDefaultAsync(m => m.userId == userId);
+
+            db.UserTableEF.Remove(model!);
+
+            await Commit();
+
+            logger.LogWarning($"model ({model}) has been deleted");
+
+            return model;
+
+        }
+        catch (Exception e)
+        {
+            logger.LogError("Account deletion failed :(. Couldn't find model.");
+            logger.LogError(e.Message);
+            return null!;
+        }
+    }
+
     public async Task<string?> Login(UserModel argModel)
     {
         try
