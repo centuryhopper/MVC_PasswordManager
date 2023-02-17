@@ -23,29 +23,16 @@ public class HomeController : Controller
         this.dataAccess = dataAccess;
     }
 
-    public async Task<IActionResult> Index(string val)
+    public IActionResult Index()
     {
         // currently the user id is passed in. We will filter the table in the database for all passwords associated with this account, if there are any.
         logger.LogWarning("entering home controller index page");
 
+        logger.LogWarning($"home index ctx user id: {ctx.HttpContext!.Session.GetString(SessionVariables.userId)}");
+
         if (ctx.HttpContext!.User.Identity!.IsAuthenticated)
         {
-            if (!string.IsNullOrEmpty(val))
-            {
-                ctx.HttpContext!.Session.SetString(SessionVariables.userId, val);
-            }
-
-            var lst = await dataAccess.Get(ctx.HttpContext!.Session.GetString(SessionVariables.userId)!);
-            var accountModel = new AccountModel
-            {
-                userId = val
-            };
-            var accountViewModel = new AccountViewModel
-            {
-                accountModels = lst as List<AccountModel>,
-                accountModel = accountModel
-            };
-            return View(accountViewModel);
+            return View(new AccountModel());
         }
 
         TempData["sessionExpired"] = "The session has expired. Please Log in again.";
@@ -54,11 +41,11 @@ public class HomeController : Controller
     }
 
     [HttpPost]
-    public async Task<ActionResult> AddAccount(AccountViewModel accountViewModel)
+    public async Task<ActionResult> AddAccount(AccountModel model)
     {
         try
         {
-            await dataAccess.Post(accountViewModel.accountModel, accountViewModel.accountModel.userId!);
+            await dataAccess.Post(model, ctx.HttpContext!.Session.GetString(SessionVariables.userId)!);
             TempData["addedAccount"] = "account has been successfully added";
         }
         catch (Exception e)
@@ -66,14 +53,14 @@ public class HomeController : Controller
             logger.LogError(e.Message);
             TempData["errorAddingAccount"] = "an error has occurred in adding an account";
         }
-        return RedirectToAction("Index", "Home", new {val=accountViewModel.accountModel.userId!});
+        return RedirectToAction("Index", "Home");
     }
 
     // Cannot pass model back up for some reason
     public async Task<ActionResult> Delete(string userId, string accountId)
     {
-        // TODO: make into try catch structure (delete)
-        try{
+        try
+        {
             var model = await dataAccess.Delete(accountId);
             logger.LogWarning("deleted model with id");
         }
@@ -82,30 +69,32 @@ public class HomeController : Controller
             logger.LogError($"encountered an issue with deleting: {e.Message}");
         }
 
-        return RedirectToAction("Index", "Home", new {val=userId});
+        return RedirectToAction("Index", "Home");
 
     }
 
-    public async Task<PartialViewResult> Edit(string accountId, int idx)
+    public async Task<IActionResult> Edit(string accountId, int idx)
     {
-        // logger.LogWarning($"edit partial: {accountId}");
+        logger.LogWarning($"editing user password account: {accountId}");
         var model = await dataAccess.GetOne(accountId);
-        return PartialView("_Edit", new EditViewModel {accountModel = model!, editIdx = idx});
+        return View(new EditViewModel {accountModel = model!, editIdx = idx});
     }
 
     [HttpPost]
     public async Task<ActionResult> Edit(EditViewModel model)
     {
+        logger.LogWarning("Finished edit");
+
         if (string.IsNullOrEmpty(model.accountModel.title) || string.IsNullOrEmpty(model.accountModel.username) || string.IsNullOrEmpty(model.accountModel.password) ||
         string.IsNullOrWhiteSpace(model.accountModel.title) || string.IsNullOrWhiteSpace(model.accountModel.username) || string.IsNullOrWhiteSpace(model.accountModel.password))
         {
             logger.LogWarning("all fields should not be empty");
             TempData["editError"] = "Please make sure you have entered all the proper fields when editing your password account.";
-            return RedirectToAction("Index", "Home", new {val=model.accountModel.userId});
+            return RedirectToAction("Index", "Home");
         }
 
         await dataAccess.Put(model.accountModel);
-        return RedirectToAction("Index", "Home", new {val=model.accountModel.userId});
+        return RedirectToAction("Index", "Home");
     }
 
     // get by default so the header really isn't needed but shown for clarity
@@ -113,7 +102,7 @@ public class HomeController : Controller
     public async Task<PartialViewResult> FilterAccounts(string filterTerm)
     {
         var userId = ctx.HttpContext!.Session.GetString(SessionVariables.userId)!;
-        return PartialView("_AccountsListView", await dataAccess.FilterBy(userId, filterTerm));
+        return PartialView("_AccountsListView", new AccountListViewModel { accountModels = await dataAccess.FilterBy(userId, filterTerm) as List<AccountModel>, filterTerm = filterTerm });
     }
 
     public async Task LogOut()

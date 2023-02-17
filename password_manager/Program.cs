@@ -10,6 +10,17 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
+/*
+
+TODO: double check the add account method in the efservice class
+
+
+
+
+*/
+
+
+
 string getConnectionString(WebApplicationBuilder builder)
 {
     // ElephantSQL formatting
@@ -77,7 +88,7 @@ builder.Services.AddDbContextPool<PasswordDbContext>(
         var connStr = getConnectionString(builder);
         options.UseNpgsql(
                 connStr
-        );
+        ).EnableSensitiveDataLogging();
     }
 );
 

@@ -62,7 +62,10 @@ namespace password_manager.Controllers
             if (ModelState.IsValid && !string.IsNullOrEmpty(val))
             {
                 ctx.HttpContext!.Session.SetString(SessionVariables.userId, val);
-                return RedirectToAction("Index", "Home", new {val=val});
+
+                logger.LogWarning($"login ctx user id: {ctx.HttpContext!.Session.GetString(SessionVariables.userId)}");
+
+                return RedirectToAction("Index", "Home");
             }
 
             TempData["incorrectLogin"] = "Incorrect username or password";

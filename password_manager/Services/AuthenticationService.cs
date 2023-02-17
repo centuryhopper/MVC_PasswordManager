@@ -160,8 +160,6 @@ public class AuthenticationService : IAuthenticationService<UserModel>
         }
     }
 
-    // TODO: be able to delete users
-    // WARN them that all their passwords would be gone as well!
 
     private string decryptPassword(UserModel user)
     {

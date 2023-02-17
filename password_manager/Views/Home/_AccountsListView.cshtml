@@ -1,7 +1,11 @@
 @using PasswordManager.Models
-@model IEnumerable<AccountModel>
+@model AccountListViewModel
 
-@if (Model.Count() == 0)
+@if (Model.accountModels.Count == 0 && String.IsNullOrEmpty(Model.filterTerm))
+{
+    <p>You don't have any passwords yet. Please start adding some.</p>
+}
+else if (Model.accountModels.Count == 0)
 {
     <p>Couldn't find any accounts with this filter query.</p>
 }
@@ -19,7 +23,7 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (var (account, idx) in Model.Select((account, i) => (account, i)))
+                @foreach (var (account, idx) in Model.accountModels.Select((account, i) => (account, i)))
                 {
                     <tr>
                         <th scope="row">@account.accountId</th>
@@ -43,16 +47,33 @@ else
                                 Delete <i class="fa fa-trash"></i>
                             </a>
 
-                            <button
+                            <a
+                                href="@Url.Action("Edit", "Home", new { idx = idx, accountId = account.accountId })"
+                                class="btn btn-success"
+                            >
+                                    Edit
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </a>
+
+                            @* <button
                                 type="button"
                                 class="btn btn-success"
                                 data-toggle="modal"
                                 data-target="@("#EditProduct-"+account.accountId)"
-                                data-url="@Url.Action("Edit", "Home", new {accountId=account.accountId, idx=idx})">
-                                Edit
+                                data-url="@Url.Action("Edit", "Home", new {accountId=account.accountId, idx=idx})"
+                            >
+                                    Edit
                                 <i class="fa-solid fa-pen-to-square"></i>
-                            </button>
-                            @await Html.PartialAsync("_Edit", new EditViewModel {accountModel = account, editIdx = idx})
+                            </button> *@
+
+                            <input id="@("accountId"+idx)" type="hidden" value="@account.accountId">
+                            <input id="@("idx"+idx)" type="hidden" value="@idx">
+
+                            @* <div id="editView"></div> *@
+
+                            @* @await Html.PartialAsync("_Edit", new EditViewModel {accountModel = account, editIdx = idx}) *@
+
+                            @* @await Component.InvokeAsync("EditDetails", new {accountId=account.accountId, idx=idx}) *@
                         </td>
                     </tr>
                 }
@@ -60,3 +81,42 @@ else
         </table>
     </div>
 }
+
+
+<script>
+    // partial views are ajax generated so window.onload will not work
+         $(document).ready(function() {
+        // Your JavaScript code here
+        console.log('logging account list view');
+    });
+
+    var openEditMenu = async (idx) => {
+
+        var url = '@Url.Action("Edit", "Home")' + '?accountId=' + encodeURIComponent(document.getElementById('accountId'+idx).value) + '&idx=' + encodeURIComponent(document.getElementById('idx'+idx).value);
+
+        try {
+            var response = await fetch(url, {
+                method: 'GET'
+            });
+            var data = await response.text();
+            document.getElementById('editView').innerHTML = '';
+            document.getElementById('editView').insertAdjacentHTML('beforeend', data);
+
+            if (callback) {
+                callback();
+            }
+        } catch (error) {
+            console.error(error);
+        }
+
+        console.log('opening edit menu');
+
+    }
+
+
+
+    var editClick = () =>
+    {
+        console.log('clicked edit');
+    }
+</script>

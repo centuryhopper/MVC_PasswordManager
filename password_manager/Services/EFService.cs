@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using PasswordManager.Data;
@@ -64,6 +65,16 @@ public class EFService : IDataAccess<AccountModel>
 
             logger.LogWarning($"retrieved models from get request by id: {userId}");
 
+            // logger.LogWarning();
+            // db.ChangeTracker.Entries().ToList().ForEach((EntityEntry e) => {
+            //     logger.LogWarning($"{e.State}");
+            //     foreach (var prop in e.CurrentValues.Properties)
+            //     {
+            //         logger.LogWarning($"{prop.Name}, {e.CurrentValues[prop]}");
+            //     }
+            // });
+
+
             return models;
         }
         catch (Exception e)
@@ -77,7 +88,17 @@ public class EFService : IDataAccess<AccountModel>
     {
         try
         {
-            var models = await db.PasswordTableEF.Where(acc => acc.userId == userId).Where(acc => string.IsNullOrEmpty(title) ? true : acc.title == title).OrderBy(acc => acc.title).ToListAsync();
+            List<AccountModel> models;
+            if (string.IsNullOrEmpty(title))
+            {
+                models = await db.PasswordTableEF.Where(acc => acc.userId == userId).OrderBy(acc => acc.title).ToListAsync();
+            }
+            else
+            {
+                models = await db.PasswordTableEF.Where(acc => acc.userId == userId).Where(acc => acc.title!.ToLower() == title.ToLower()).OrderBy(acc => acc.title).ToListAsync();
+            }
+
+            // List<AccountModel> modelClones = new List<AccountModel>();
 
             models.ForEach(model => model.password = SymmetricEncryptionHandler.DecryptStringFromBytes_Aes(Convert.FromBase64String(model.password!), Convert.FromBase64String(model.aesKey!), Convert.FromBase64String(model.aesIV!)));
 
@@ -263,9 +284,13 @@ public class EFService : IDataAccess<AccountModel>
     {
         try
         {
-            var model = await db.PasswordTableEF.FindAsync(accountId);
+            var model = await db.PasswordTableEF.FirstOrDefaultAsync(m => m.accountId == accountId);
 
-            model!.password = SymmetricEncryptionHandler.DecryptStringFromBytes_Aes(Convert.FromBase64String(model.password!), Convert.FromBase64String(model.aesKey!), Convert.FromBase64String(model.aesIV!));
+            byte[] passwordBytes = Convert.FromBase64String(model.password!);
+            byte[] keyBytes = Convert.FromBase64String(model.aesKey!);
+            byte[] ivBytes = Convert.FromBase64String(model.aesIV!);
+
+            model!.password = SymmetricEncryptionHandler.DecryptStringFromBytes_Aes(passwordBytes, keyBytes, ivBytes);
 
             return model;
         }

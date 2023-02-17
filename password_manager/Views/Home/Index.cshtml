@@ -1,6 +1,7 @@
 ﻿@inject IHttpContextAccessor ctx
 @using PasswordManager.Models
-@model AccountViewModel
+@using PasswordManager.Utils
+@model AccountModel
 
 @{
     ViewData["Title"] = "Password List";
@@ -29,28 +30,51 @@
                             <div class="col-12">
                                 <div class="form-outline">
 
-                                    @Html.TextBoxFor(m => m.accountModel.title, new { @class = "form-control", id = "filterInput", placeholder = "Filter by title...", type="text", ariaLabel="title", required=true})
+                                    <input id="filterInput" type="text" asp-for="title" class="form-control" placeholder="Filter by title..." ariaLabel="titleFilter">
 
-                                    @using(Html.BeginForm("AddAccount", "Home", FormMethod.Post, new {@id = "contactForm"}))
-                                    {
+                                    <form action="@Url.Action("AddAccount", "Home")" method="post" id="contactForm">
                                         @Html.AntiForgeryToken()
                                         <div class="input-group">
+                                            <input
+                                                asp-for="title"
+                                                class="form-control"
+                                                id="input1"
+                                                placeholder="Enter a title..."
+                                                type="text"
+                                                ariaLabel="title"
+                                                required
+                                            >
 
-                                            @Html.TextBoxFor(m => m.accountModel.title, new { @class = "form-control", id = "input1", placeholder = "Enter a title...", type="text", ariaLabel="title", required=true})
+                                            <input
+                                                asp-for="username"
+                                                class="form-control"
+                                                id="input2"
+                                                placeholder="Enter a username..."
+                                                type="text"
+                                                ariaLabel="username"
+                                                required
+                                            >
 
-                                            @Html.TextBoxFor(m => m.accountModel.username, new { @class = "form-control", id = "input2", placeholder = "Enter a username...", type="text", ariaLabel="username", required=true})
-
-                                            @Html.TextBoxFor(m => m.accountModel.password, new { @class = "form-control", id = "input3", placeholder = "Enter a password...", type="text", ariaLabel="password", required=true})
-
-                                            @Html.HiddenFor(m => m.accountModel.userId)
-
+                                            <input
+                                                asp-for="password"
+                                                class="form-control"
+                                                id="input3"
+                                                placeholder="Enter a password..."
+                                                type="text"
+                                                ariaLabel="password"
+                                                required
+                                            >
                                         </div>
+
+                                        <input type="hidden" name="userId" asp-for="userId" value="@(ctx.HttpContext!.Session.GetString(SessionVariables.userId))" />
+
                                         <button
                                             type="submit"
                                             class="btn btn-primary ms-1">
                                             Add account
                                         </button>
-                                    }
+                                    </form>
+
                                 </div>
                             </div>
                             @if (TempData["addedAccount"] is not null)
@@ -61,14 +85,10 @@
                             {
                                 <div class="alert alert-danger">@TempData["errorAddingAccount"]</div>
                             }
-                            @if (Model.accountModels?.Count() == 0)
-                            {
-                                <p>You don't have any passwords yet. Please start adding some.</p>
-                            }
-                            else
-                            {
-                                <div id="accountListView"></div>
-                            }
+
+                            @* @await Component.InvokeAsync("EditDetails", new {accountId="aa9723f8-d1c5-42de-bfab-b24621c88963", idx=1}) *@
+
+                            <div id="accountListView"></div>
                         </div>
                     </div>
                 </div>
@@ -102,6 +122,7 @@
                 method: 'GET',
                 data: {filterTerm: $('#filterInput').val()},
                 success: (res) => {
+                    // clear the html before outputting the res
                     $('#accountListView').html('').html(res)
                 },
                 error: (err) => {
