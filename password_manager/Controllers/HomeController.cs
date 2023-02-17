@@ -37,7 +37,7 @@ public class HomeController : Controller
 
         TempData["sessionExpired"] = "The session has expired. Please Log in again.";
 
-        return RedirectToAction("Index", "Login");
+        return RedirectToAction("Login", "Account");
     }
 
     [HttpPost]
@@ -113,10 +113,10 @@ public class HomeController : Controller
         ctx.HttpContext.Response.Cookies.Delete(".AspNetCore.Antiforgery.2AllGjtG7jM");
         ctx.HttpContext.Session.Clear();
         logger.LogWarning("logging user out");
-        ctx.HttpContext!.Response.Redirect("/Login");
+        ctx.HttpContext!.Response.Redirect(Url.Action("Login", "Account")!);
 
         // sign the user out and redirect to landing page
-        // return RedirectToAction("Index", "Login");
+        // return RedirectToAction("Login", "Account");
     }
 
     public IActionResult Privacy()

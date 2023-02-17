@@ -12,7 +12,10 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 /*
 
-TODO: double check the add account method in the efservice class
+TODO: clean up and document code
+TODO: add unit tests for password encrypt/decrypt methods
+TODO: add authorizations and roles to crud controllers (Home in this case)
+TODO: add identity framework to application
 
 
 
@@ -120,6 +123,6 @@ app.UseCookiePolicy();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Login}/{action=Index}/{id?}");
+    pattern: "{controller=Account}/{action=Login}/{id?}");
 
 app.Run();

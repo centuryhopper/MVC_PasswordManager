@@ -15,7 +15,9 @@ public class PasswordDbContext : DbContext /*IdentityDbContext<IdentityUser>*/
     // increment the id of the model
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // increment the id column for every newly added object
         modelBuilder.UseSerialColumns();
+        // modelBuilder.UseIdentityColumns();
 
         // fluent api stuff would go in this method
         // modelBuilder.Entity<IdentityUserLogin<string>>()
@@ -24,15 +26,15 @@ public class PasswordDbContext : DbContext /*IdentityDbContext<IdentityUser>*/
         // modelBuilder.Entity<IdentityUserRole<string>>()
         // .HasKey(r => new { r.UserId, r.RoleId });
 
-        modelBuilder.Entity<AccountModel>()
-        .Property<string>("userId");
+        // modelBuilder.Entity<AccountModel>()
+        // .Property<string>("userId");
 
+        // identify the foreign key primary key relationship
         modelBuilder.Entity<AccountModel>()
             .HasOne(account => account.user)
             .WithMany(user => user.accounts)
             .HasForeignKey("userId")
             .IsRequired(true);
-
     }
 
     public DbSet<AccountModel> PasswordTableEF { get; set; }

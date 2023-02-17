@@ -54,26 +54,6 @@ else
                                     Edit
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </a>
-
-                            @* <button
-                                type="button"
-                                class="btn btn-success"
-                                data-toggle="modal"
-                                data-target="@("#EditProduct-"+account.accountId)"
-                                data-url="@Url.Action("Edit", "Home", new {accountId=account.accountId, idx=idx})"
-                            >
-                                    Edit
-                                <i class="fa-solid fa-pen-to-square"></i>
-                            </button> *@
-
-                            <input id="@("accountId"+idx)" type="hidden" value="@account.accountId">
-                            <input id="@("idx"+idx)" type="hidden" value="@idx">
-
-                            @* <div id="editView"></div> *@
-
-                            @* @await Html.PartialAsync("_Edit", new EditViewModel {accountModel = account, editIdx = idx}) *@
-
-                            @* @await Component.InvokeAsync("EditDetails", new {accountId=account.accountId, idx=idx}) *@
                         </td>
                     </tr>
                 }
@@ -81,42 +61,3 @@ else
         </table>
     </div>
 }
-
-
-<script>
-    // partial views are ajax generated so window.onload will not work
-         $(document).ready(function() {
-        // Your JavaScript code here
-        console.log('logging account list view');
-    });
-
-    var openEditMenu = async (idx) => {
-
-        var url = '@Url.Action("Edit", "Home")' + '?accountId=' + encodeURIComponent(document.getElementById('accountId'+idx).value) + '&idx=' + encodeURIComponent(document.getElementById('idx'+idx).value);
-
-        try {
-            var response = await fetch(url, {
-                method: 'GET'
-            });
-            var data = await response.text();
-            document.getElementById('editView').innerHTML = '';
-            document.getElementById('editView').insertAdjacentHTML('beforeend', data);
-
-            if (callback) {
-                callback();
-            }
-        } catch (error) {
-            console.error(error);
-        }
-
-        console.log('opening edit menu');
-
-    }
-
-
-
-    var editClick = () =>
-    {
-        console.log('clicked edit');
-    }
-</script>

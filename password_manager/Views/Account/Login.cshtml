@@ -1,21 +1,21 @@
 @model PasswordManager.Models.UserModel
 
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Login";
     Layout = "_LoginSignUpLayout";
 
-    var userNameFieldId = "register_input1";
-    var passwordFieldId = "register_input2";
+    var userNameFieldId = "login_input1";
+    var passwordFieldId = "login_input2";
 }
 
-<h1 class="text-center">Create an Account</h1>
+<h1 class="text-center">Log in</h1>
 
-@if (TempData["userAlreadyExists"] is not null)
+@if (TempData["sessionExpired"] is not null)
 {
-    <div class="alert alert-danger">@TempData["userAlreadyExists"]</div>
+    <div class="alert alert-danger">@TempData["sessionExpired"]</div>
 }
 
-<form id="contactFormRegister" method="post" action="@Url.Action("Register", "Register")">
+<form id="contactForm" method="post" action="@Url.Action("ValidateLogin", "Account")">
     @Html.AntiForgeryToken()
 
     <div class="form-outline mb-4">
@@ -32,13 +32,17 @@
         <span asp-validation-for="password" class="text-danger"></span>
     </div>
 
-    <input id="submitButton" type="submit" value="Sign up" class="btn btn-primary" />
+    <input id="submitButton" type="submit" value="Log in" class="btn btn-primary" />
 
     <div class="text-center">
-        <p>Already have an account? @Html.ActionLink("Log in", "Index", "Login")</p>
+        <p>Don't have an account? @Html.ActionLink("Sign up", "Register", "Account")</p>
     </div>
 </form>
 
+@if (TempData["incorrectLogin"] is not null)
+{
+    <div class="alert alert-danger">@TempData["incorrectLogin"]</div>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
