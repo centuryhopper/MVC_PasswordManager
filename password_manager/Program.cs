@@ -18,12 +18,10 @@ TODO: add authorizations and roles to crud controllers (Home in this case)
 TODO: add identity framework to application
 
 
-
-
 */
 
 
-
+// parse the elephantSQL provided string into ASP.net core friendly connection string
 string getConnectionString(WebApplicationBuilder builder)
 {
     // ElephantSQL formatting
@@ -42,13 +40,17 @@ string getConnectionString(WebApplicationBuilder builder)
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Dependency injection
 builder.Services.AddScoped<IDataAccess<AccountModel>, EFService>();
 builder.Services.AddScoped<IAuthenticationService<UserModel>, AuthenticationService>();
 
+// this singleton will be shared in all the controllers that have a DI for the httpcontext accessor
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
 
 builder.Services.AddDistributedMemoryCache();
 
+// determine how long a user can idle in the application before timing out
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(120);
@@ -63,6 +65,7 @@ builder.Services.AddCors(p => p.AddPolicy(name: "client_policy", build =>
     build.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
 }));
 
+// JWT set up
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
     options =>
 {
@@ -76,6 +79,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
     };
 });
 
+// authentication cookie middleware
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
 .AddCookie(options =>
 {
@@ -85,6 +89,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 // builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<PasswordDbContext>();
 
+// link to postgreSQL db for entity framework
 builder.Services.AddDbContextPool<PasswordDbContext>(
     options =>
     {

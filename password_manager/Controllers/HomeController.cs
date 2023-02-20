@@ -75,9 +75,16 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Edit(string accountId, int idx)
     {
-        logger.LogWarning($"editing user password account: {accountId}");
-        var model = await dataAccess.GetOne(accountId);
-        return View(new EditViewModel {accountModel = model!, editIdx = idx});
+        if (ctx.HttpContext!.User.Identity!.IsAuthenticated)
+        {
+            logger.LogWarning($"editing user password account: {accountId}");
+            var model = await dataAccess.GetOne(accountId);
+            return View(new EditViewModel {accountModel = model!, editIdx = idx});
+        }
+
+        TempData["sessionExpired"] = "The session has expired. Please Log in again.";
+
+        return RedirectToAction("Login", "Account");
     }
 
     [HttpPost]
@@ -85,8 +92,15 @@ public class HomeController : Controller
     {
         logger.LogWarning("Finished edit");
 
-        if (string.IsNullOrEmpty(model.accountModel.title) || string.IsNullOrEmpty(model.accountModel.username) || string.IsNullOrEmpty(model.accountModel.password) ||
-        string.IsNullOrWhiteSpace(model.accountModel.title) || string.IsNullOrWhiteSpace(model.accountModel.username) || string.IsNullOrWhiteSpace(model.accountModel.password))
+        if
+        (
+            string.IsNullOrEmpty(model.accountModel.title)         ||
+            string.IsNullOrEmpty(model.accountModel.username)      ||
+            string.IsNullOrEmpty(model.accountModel.password)      ||
+            string.IsNullOrWhiteSpace(model.accountModel.title)    ||
+            string.IsNullOrWhiteSpace(model.accountModel.username) ||
+            string.IsNullOrWhiteSpace(model.accountModel.password)
+        )
         {
             logger.LogWarning("all fields should not be empty");
             TempData["editError"] = "Please make sure you have entered all the proper fields when editing your password account.";

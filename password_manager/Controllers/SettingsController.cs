@@ -24,7 +24,14 @@ namespace password_manager.Controllers
 
         public IActionResult Index()
         {
-            return View();
+            if (ctx.HttpContext!.User.Identity!.IsAuthenticated)
+            {
+                return View();
+            }
+
+            TempData["sessionExpired"] = "The session has expired. Please Log in again.";
+
+            return RedirectToAction("Login", "Account");
         }
 
         public async Task<IActionResult> DeleteAccount()
