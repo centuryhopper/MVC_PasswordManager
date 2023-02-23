@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
-using password_manager.Models;
+using Newtonsoft.Json;
 using PasswordManager.Models;
 using PasswordManager.Services;
 using PasswordManager.Utils;
@@ -10,6 +10,7 @@ using PasswordManager.Utils;
 namespace password_manager.Controllers;
 
 
+// currently using cookie based authentication
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> logger;
@@ -109,6 +110,32 @@ public class HomeController : Controller
 
         await dataAccess.Put(model.accountModel);
         return RedirectToAction("Index", "Home");
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Autosave(string autoSaveModel)
+    {
+
+        AccountModel model = JsonConvert.DeserializeObject<AccountModel>(autoSaveModel)!;
+        // logger.LogWarning($"autosaving {model}");
+
+        if
+        (
+            string.IsNullOrEmpty(model.title)         ||
+            string.IsNullOrEmpty(model.username)      ||
+            string.IsNullOrEmpty(model.password)      ||
+            string.IsNullOrWhiteSpace(model.title)    ||
+            string.IsNullOrWhiteSpace(model.username) ||
+            string.IsNullOrWhiteSpace(model.password)
+        )
+        {
+            logger.LogWarning("all fields should not be empty");
+            TempData["editError"] = "Please make sure you have entered all the proper fields when editing your password account.";
+            return BadRequest();
+        }
+
+        await dataAccess.Put(model);
+        return Ok();
     }
 
     // get by default so the header really isn't needed but shown for clarity

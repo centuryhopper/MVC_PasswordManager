@@ -1,50 +1,98 @@
-
-@using PasswordManager.Models
 @model EditViewModel
 
 @{
   string passwordInputId = "editPassword" + Model.editIdx;
+  var autoSaveSeconds = 3;
 }
 
-<form id="editForm" action="@Url.Action("Edit", "Home")" method="post">
-    @Html.AntiForgeryToken()
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <div class="form-group">
-        @Html.HiddenFor(m => m.accountModel.accountId)
-        @Html.HiddenFor(m => m.accountModel.userId)
-    </div>
-    <div class="form-group">
-        <label for="title" class="form-label">Title</label>
-        <input asp-for="@Model.accountModel.title" id="edit1" class="form-control" placeholder="please enter a new title. Old title: @Model.accountModel.title" type="text" value="@Model.accountModel.title">
-        <span asp-validation-for="@Model.accountModel.title" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label for="username" class="form-label">Username</label>
-        <input asp-for="@Model.accountModel.username" id="edit2" class="form-control" placeholder="please enter a new username. Old username: @Model.accountModel.username" type="text" value="@Model.accountModel.username">
-        <span asp-validation-for="@Model.accountModel.username" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label for="password" class="form-label">Password</label>
-
-        <input
-            asp-for="@Model.accountModel.password"
-            id="@passwordInputId"
-            class="form-control" placeholder="please enter a new password. Old password: @Model.accountModel.password"
-            type="password"
-            value="@Model.accountModel.password">
-        <span asp-validation-for="@Model.accountModel.password" class="text-danger"></span>
-        <i id="@("open"+passwordInputId)" class="fa-solid fa-eye" style="display: none;" onclick="toggleVisible('@passwordInputId')"></i>
-        <i id="@("close"+passwordInputId)" class="fa-solid fa-eye-slash" onclick="toggleVisible('@passwordInputId')"></i>
-    </div>
-    <div class="form-group row">
-        <label class="col-lg-3 col-form-label form-control-label"></label>
-        <div class="col-lg-9">
-            <a class="btn btn-secondary"
-                href="@Url.Action("Index", "Home")">Cancel</a>
-            <input type="submit" class="btn btn-primary" value="Save Changes" />
+<div class="text-center">
+    <form id="@("editForm"+Model.editIdx)" action="@Url.Action("Edit", "Home")" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="form-group">
+            @Html.HiddenFor(m => m.accountModel.accountId)
+            @Html.HiddenFor(m => m.accountModel.userId)
         </div>
-    </div>
-</form>
-@* <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-<button type="button" class="btn btn-primary" onclick="submitForm()">Save</button> *@
+        <div class="form-group">
+            <label for="title" class="form-label">Title</label>
+            <input asp-for="@Model.accountModel.title" id="edit1" class="form-control" placeholder="please enter a new title. Old title: @Model.accountModel.title" type="text" value="@Model.accountModel.title">
+            <span asp-validation-for="@Model.accountModel.title" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label for="username" class="form-label">Username</label>
+            <input asp-for="@Model.accountModel.username" id="edit2" class="form-control" placeholder="please enter a new username. Old username: @Model.accountModel.username" type="text" value="@Model.accountModel.username">
+            <span asp-validation-for="@Model.accountModel.username" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label for="password" class="form-label">Password</label>
 
+            <input
+                asp-for="@Model.accountModel.password"
+                id="@passwordInputId"
+                class="form-control" placeholder="please enter a new password. Old password: @Model.accountModel.password"
+                type="password"
+                value="@Model.accountModel.password">
+            <span asp-validation-for="@Model.accountModel.password" class="text-danger"></span>
+            <i id="@("open"+passwordInputId)" class="fa-solid fa-eye" style="display: none;" onclick="toggleVisible('@passwordInputId')"></i>
+            <i id="@("close"+passwordInputId)" class="fa-solid fa-eye-slash" onclick="toggleVisible('@passwordInputId')"></i>
+        </div>
+        @* <div class="form-group row">
+            <label class="col-lg-3 col-form-label form-control-label"></label>
+            <div class="col-lg-9">
+                <a class="btn btn-secondary"
+                    href="@Url.Action("Index", "Home")">Cancel</a>
+                <input type="submit" class="btn btn-primary" value="Save Changes" />
+            </div>
+        </div> *@
+    </form>
+</div>
+
+
+@section Scripts {
+    <script>
+        //console.log(@Model.editIdx);
+
+        $(document).ready(() => {
+            setInterval(() =>
+            {
+                autosave(@Model.editIdx);
+            }, @autoSaveSeconds * 1000);
+        })
+
+
+        var autosave = (idx) =>
+        {
+            // console.log(`autosaving ${'#editForm'+idx}`)
+            // Get the form data
+            var formData = $('#editForm'+idx).serializeArray();
+
+            //console.log(formData);
+
+            if (formData != null && formData != undefined && formData.length > 0)
+            {
+                let sendToServer = {
+                    accountId: formData.find(o => o.name === 'accountModel.accountId')['value'],
+                    title: formData.find(o => o.name === 'accountModel.title')['value'],
+                    username: formData.find(o => o.name === 'accountModel.username')['value'],
+                    password: formData.find(o => o.name === 'accountModel.password')['value'],
+                    userId: formData.find(o => o.name === 'accountModel.userId')['value']
+                }
+
+                // console.log(sendToServer)
+
+                // Send an AJAX request to the autosave action
+                $.ajax({
+                    type: 'POST',
+                    url: '/Home/Autosave',
+                    data: {autoSaveModel: JSON.stringify(sendToServer)},
+                    success: function(result) {
+                        console.log('Autosave successful');
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Autosave failed: ' + error);
+                    }
+                });
+            }
+        }
+    </script>
+}

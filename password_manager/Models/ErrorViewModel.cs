@@ -1,4 +1,4 @@
-namespace password_manager.Models;
+namespace PasswordManager.Models;
 
 public class ErrorViewModel
 {
