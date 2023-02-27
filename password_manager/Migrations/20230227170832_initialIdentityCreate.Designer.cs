@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PasswordManager.Data;
@@ -11,9 +12,11 @@ using PasswordManager.Data;
 namespace passwordmanager.Migrations
 {
     [DbContext(typeof(PasswordDbContext))]
-    partial class PasswordDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230227170832_initialIdentityCreate")]
+    partial class initialIdentityCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -159,10 +162,6 @@ namespace passwordmanager.Migrations
                     b.Property<string>("accountId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Id")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("aesIV")
                         .HasColumnType("text");
 
@@ -196,7 +195,7 @@ namespace passwordmanager.Migrations
 
                     b.HasKey("accountId");
 
-                    b.HasIndex("Id");
+                    b.HasIndex("userId");
 
                     b.ToTable("PasswordTableEF");
                 });
@@ -242,6 +241,10 @@ namespace passwordmanager.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 
@@ -260,6 +263,9 @@ namespace passwordmanager.Migrations
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<string>("userId")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -328,7 +334,7 @@ namespace passwordmanager.Migrations
                 {
                     b.HasOne("PasswordManager.Models.ApplicationUser", "user")
                         .WithMany("accounts")
-                        .HasForeignKey("Id")
+                        .HasForeignKey("userId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

@@ -6,8 +6,6 @@ using Microsoft.IdentityModel.Tokens;
 using PasswordManager.Data;
 using PasswordManager.Models;
 using PasswordManager.Services;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 /*
@@ -42,11 +40,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Dependency injection
 builder.Services.AddScoped<IDataAccess<AccountModel>, EFService>();
-builder.Services.AddScoped<IAuthenticationService<UserModel>, AuthenticationService>();
 
-// this singleton will be shared in all the controllers that have a DI for the httpcontext accessor
+// this singleton is meant to be used in non-controller classes that have a DI for the httpcontext accessor
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-
 
 builder.Services.AddDistributedMemoryCache();
 
@@ -65,17 +61,26 @@ builder.Services.AddCors(p => p.AddPolicy(name: "client_policy", build =>
     build.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
 }));
 
-// JWT set up
+// JWT token auth set up
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
     options =>
 {
+    var secretKey = builder.Configuration.GetSection("AppSettings:Token").Value!;
+    var issuer = builder.Configuration.GetSection("AppSettings:Issuer").Value!;
+    var audience = builder.Configuration.GetSection("AppSettings:Audience").Value!;
+
+    // options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
+        ValidateIssuer = true,
+        ValidateAudience = true,
         ValidateIssuerSigningKey = true,
+        ValidateLifetime = true,
+        ValidIssuer = issuer,
+        ValidAudience = audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8
-                .GetBytes(builder.Configuration.GetSection("AppSettings:Token").Value!)),
-        ValidateIssuer = false,
-        ValidateAudience = false
+                .GetBytes(secretKey)),
     };
 });
 
@@ -85,9 +90,13 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 {
     options.LoginPath = "/Login";
     options.Cookie.Name = "CookieMadeByLeo";
+    options.Cookie.HttpOnly = true;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+    // options.AccessDeniedPath = "/AccessDenied";
 });
 
-// builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<PasswordDbContext>();
+// identity framework setup
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<PasswordDbContext>().AddDefaultTokenProviders();
 
 // link to postgreSQL db for entity framework
 builder.Services.AddDbContextPool<PasswordDbContext>(
@@ -121,7 +130,6 @@ app.UseCors(
 );
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.UseCookiePolicy();

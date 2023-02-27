@@ -1,4 +1,4 @@
-@model PasswordManager.Models.UserModel
+@model LoginViewModel
 
 @{
     ViewData["Title"] = "Login";
@@ -17,6 +17,8 @@
 
 <form id="contactForm" method="post" action="@Url.Action("ValidateLogin", "Account")">
     @Html.AntiForgeryToken()
+
+    <div class="text-danger" asp-validation-summary="All"></div>
 
     <div class="form-outline mb-4">
         <label for=@userNameFieldId class="form-label">Username</label>

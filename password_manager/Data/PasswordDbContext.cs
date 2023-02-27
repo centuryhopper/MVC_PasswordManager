@@ -5,7 +5,7 @@ using PasswordManager.Models;
 
 namespace PasswordManager.Data;
 
-public class PasswordDbContext : DbContext /*IdentityDbContext<IdentityUser>*/
+public class PasswordDbContext : IdentityDbContext<ApplicationUser>
 {
     public PasswordDbContext(DbContextOptions<PasswordDbContext> options) : base(options)
     {
@@ -15,30 +15,24 @@ public class PasswordDbContext : DbContext /*IdentityDbContext<IdentityUser>*/
     // increment the id of the model
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // https://stackoverflow.com/questions/40703615/the-entity-type-identityuserloginstring-requires-a-primary-key-to-be-defined
+        base.OnModelCreating(modelBuilder);
+
         // increment the id column for every newly added object
-        modelBuilder.UseSerialColumns();
-        // modelBuilder.UseIdentityColumns();
-
-        // fluent api stuff would go in this method
-        // modelBuilder.Entity<IdentityUserLogin<string>>()
-        // .HasKey(l => new { l.LoginProvider, l.ProviderKey });
-
-        // modelBuilder.Entity<IdentityUserRole<string>>()
-        // .HasKey(r => new { r.UserId, r.RoleId });
-
         // modelBuilder.Entity<AccountModel>()
-        // .Property<string>("userId");
+        // .Property(x => x.accountId)
+        // .UseSerialColumn();
+        // modelBuilder.UseIdentityColumns();
 
         // identify the foreign key primary key relationship
         modelBuilder.Entity<AccountModel>()
             .HasOne(account => account.user)
             .WithMany(user => user.accounts)
-            .HasForeignKey("userId")
+            .HasForeignKey("Id")
             .IsRequired(true);
     }
 
     public DbSet<AccountModel> PasswordTableEF { get; set; }
-    public DbSet<UserModel> UserTableEF { get; set; }
 
 }
 

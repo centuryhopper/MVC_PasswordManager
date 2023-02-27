@@ -1,4 +1,3 @@
-
 using System.ComponentModel.DataAnnotations;
 
 namespace PasswordManager.Models;
@@ -11,11 +10,10 @@ public class UserModel
     [Required(ErrorMessage="Username is required"), StringLength(32), Display(Name="Username")]
     public string? username { get; set; }
 
+    [DataType(DataType.Password)]
     [Required(ErrorMessage="Password is required"), StringLength(512), Display(Name="Password")]
     public string? password { get; set; }
-
     public string? aesKey { get; set; }
-
     public string? aesIV { get; set; }
     public List<AccountModel>? accounts { get; set; }
     public string currentJwtToken { get; set; } = string.Empty;

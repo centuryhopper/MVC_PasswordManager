@@ -10,9 +10,9 @@ public class AccountModel
     public string? accountId { get; set; }
 
     // each account will be associated with only one user
-    [Required, ForeignKey("UserModel")]
+    [Required, ForeignKey("ApplicationUser")]
     public string? userId {get; set;}
-    public UserModel user {get; set;}
+    public ApplicationUser user {get; set;} = null!;
 
     [Required(ErrorMessage="Title is required"), StringLength(32), Display(Name="Title: ")]
     public string? title { get; set; }

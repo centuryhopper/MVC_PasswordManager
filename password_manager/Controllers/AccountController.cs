@@ -1,97 +1,131 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using PasswordManager.Models;
-using PasswordManager.Services;
 using PasswordManager.Utils;
 
-namespace password_manager.Controllers
+namespace PasswordManager.Controllers;
+
+public class AccountController : Controller
 {
-    public class AccountController : Controller
+    private readonly ILogger<AccountController> logger;
+    private readonly IConfiguration configuration;
+    private readonly UserManager<ApplicationUser> userManager;
+    private readonly SignInManager<ApplicationUser> signInManager;
+    private readonly RoleManager<IdentityRole> roleManager;
+
+    public AccountController(ILogger<AccountController> logger, IConfiguration configuration, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<IdentityRole> roleManager)
     {
-        private readonly ILogger<AccountController> logger;
-        private readonly IAuthenticationService<UserModel> authService;
-        private readonly IHttpContextAccessor ctx;
+        this.logger = logger;
+        this.configuration = configuration;
+        this.userManager = userManager;
+        this.signInManager = signInManager;
+        this.roleManager = roleManager;
+    }
 
-        public AccountController(ILogger<AccountController> logger, IAuthenticationService<UserModel> authService, IHttpContextAccessor ctx)
+    public IActionResult Login()
+    {
+        logger.LogWarning("log in page");
+
+        return View();
+    }
+
+    public IActionResult Register()
+    {
+        return View();
+    }
+
+    public IActionResult Success()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ValidateLogin(LoginViewModel model, string? returnUrl = null)
+    {
+        ViewData["ReturnUrl"] = returnUrl;
+        if (ModelState.IsValid)
         {
-            this.logger = logger;
-            this.authService = authService;
-            this.ctx = ctx;
-        }
+            var user = await userManager.FindByNameAsync(model.username);
 
-        public async Task<IActionResult> Login()
-        {
-            await ctx.HttpContext!.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            var password = await userManager.CheckPasswordAsync(user!, model.password);
 
-            ctx.HttpContext!.Response.Headers["Cache-Control"] = "no-store";
+            // var result = await signInManager.PasswordSignInAsync(model.username, model.password, isPersistent: false, lockoutOnFailure: false);
 
-            ctx.HttpContext.Response.Cookies.Delete(".AspNetCore.Session");
-            ctx.HttpContext.Response.Cookies.Delete(".AspNetCore.Antiforgery.2AllGjtG7jM");
-
-            ctx.HttpContext.Session.Clear();
-
-            logger.LogWarning("log in page");
-
-            return View();
-        }
-
-        public IActionResult Register()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        public async Task<ActionResult> ValidateLogin(UserModel model)
-        {
-            logger.LogWarning($"trying to log in");
-
-            string? val = await authService.Login(model);
-
-            var claims = new List<Claim>
+            if (user is not null && password)
             {
-                new Claim(ClaimTypes.Name, model.username!)
-            };
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var principal = new ClaimsPrincipal(identity);
-            var props = new AuthenticationProperties();
-
-            await ctx.HttpContext!.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, props);
-
-            if (ModelState.IsValid && !string.IsNullOrEmpty(val))
-            {
-                ctx.HttpContext!.Session.SetString(SessionVariables.userId, val);
-
-                logger.LogWarning($"login ctx user id: {ctx.HttpContext!.Session.GetString(SessionVariables.userId)}");
-
-                return RedirectToAction("Index", "Home");
+                await signInManager.SignInAsync(user, isPersistent: false);
+                var roles = await userManager.GetRolesAsync(user!);
+                if (roles.Contains("Admin"))
+                {
+                    HttpContext.Session.SetString(SessionVariables.userId, user?.Id!);
+                    return RedirectToAction(nameof(Success));
+                }
             }
-
-            TempData["incorrectLogin"] = "Incorrect username or password";
-
-            return RedirectToAction(nameof(Login));
-        }
-
-        [HttpPost]
-        public async Task<ActionResult> ValidateRegister(UserModel model)
-        {
-            logger.LogWarning($"logged in {model}");
-
-            bool res = await authService.Register(model);
-
-            if (ModelState.IsValid && res)
+            else
             {
+                ModelState.AddModelError(String.Empty, "Invalid login attempt.");
                 return RedirectToAction(nameof(Login));
             }
-
-            TempData["userAlreadyExists"] = "This user already exists. Please try a different username.";
-
-            return RedirectToAction(nameof(Register));
         }
+
+        TempData["incorrectLogin"] = "something failed, redisplaying login...";
+        // If we got this far, something failed, redisplay form
+        return RedirectToAction(nameof(Login));
+    }
+
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<ActionResult> ValidateRegister(RegisterViewModel model)
+    {
+        logger.LogWarning($"registering {model}");
+
+        if (ModelState.IsValid)
+        {
+            var user = new ApplicationUser
+            {
+                UserName = model.username,
+                Email = model.Email,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+            };
+
+            var result = await userManager.CreateAsync(user, model.password);
+
+            if (result.Succeeded)
+            {
+                await signInManager.SignInAsync(user, isPersistent: false);
+
+                // make sure the role exists
+                var roleExist = await roleManager.RoleExistsAsync("Admin");
+                if (!roleExist)
+                {
+                    var roleResult = await roleManager.CreateAsync(new IdentityRole("Admin"));
+                }
+
+                // lets just assign everyone to admin role for now
+                await userManager.AddToRoleAsync(user, "Admin");
+
+                var userId = user?.Id!;
+
+                HttpContext.Session.SetString(SessionVariables.userId, userId);
+
+                return RedirectToAction(nameof(Success));
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+        }
+
+        TempData["userAlreadyExists"] = "Something went wrong with registering";
+
+        return RedirectToAction(nameof(Register));
+
     }
 }

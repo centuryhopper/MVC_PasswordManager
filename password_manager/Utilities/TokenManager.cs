@@ -7,18 +7,21 @@ namespace PasswordManager.Utils;
 
 public static class TokenManager
 {
-    public static (string, DateTime, DateTime) createJwtToken(string userId, string tokenSecretKey)
+    public static (string, DateTime, DateTime) createJwtToken(UserModel model, string tokenSecretKey)
     {
         var now = DateTime.Now;
         var expires = now.AddDays(1);
         byte[] key = Convert.FromBase64String(tokenSecretKey);
         var securityKey = new SymmetricSecurityKey(key);
+
+
         var descriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(
                 new []
                 {
-                    new Claim(ClaimTypes.NameIdentifier, userId),
+                    new Claim(ClaimTypes.NameIdentifier, model.userId!),
+                    new Claim(ClaimTypes.Name, model.username!)
                 }
             ),
             Expires = expires,
@@ -28,27 +31,6 @@ public static class TokenManager
         var handler = new JwtSecurityTokenHandler();
         JwtSecurityToken token = handler.CreateJwtSecurityToken(descriptor);
         return (handler.WriteToken(token), now, expires);
-
-
-        // List<Claim> claims = new List<Claim>
-        // {
-        //     new Claim(ClaimTypes.NameIdentifier, pwm.username!),
-        //     new Claim(ClaimTypes.Role, "Admin"),
-        //     new Claim(JwtRegisteredClaimNames.Sub, pwm.userId!),
-        //     new Claim(JwtRegisteredClaimNames.Exp, expires.ToString()),
-        // };
-
-        // var signingCreds = new SigningCredentials(new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(
-        //     tokenSecretKey)), SecurityAlgorithms.HmacSha512Signature);
-
-        // var token = new JwtSecurityToken(
-        //     claims: claims,
-        //     expires: expires,
-        //     signingCredentials: signingCreds);
-
-        // var jwt = new JwtSecurityTokenHandler().WriteToken(token);
-
-        // return (jwt, now, expires);
     }
 
     // get username from the token
@@ -76,7 +58,7 @@ public static class TokenManager
         return userIdClaim.Value;
     }
 
-    private static ClaimsPrincipal? GetPrincipal(string token, string secret)
+    public static ClaimsPrincipal? GetPrincipal(string token, string secret)
     {
         // var handler = new JwtSecurityTokenHandler();
         // var securityToken = handler.ReadToken(token) as SecurityToken;

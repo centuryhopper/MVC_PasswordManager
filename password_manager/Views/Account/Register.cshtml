@@ -1,11 +1,16 @@
-@model PasswordManager.Models.UserModel
+@model RegisterViewModel
 
 @{
     ViewData["Title"] = "Register";
     Layout = "_LoginSignUpLayout";
 
-    var userNameFieldId = "register_input1";
-    var passwordFieldId = "register_input2";
+    var userNameFieldId = "register_input_username";
+    var passwordFieldId = "register_input_password";
+    var confirmPasswordFieldId = "register_input_confirm_password";
+    var emailFieldId = "register_input_email";
+    var firstNameFieldId = "register_input_first_name";
+    var lastNameFieldId = "register_input_last_name";
+
 }
 
 <h1 class="text-center">Create an Account</h1>
@@ -17,6 +22,24 @@
 
 <form id="contactFormRegister" method="post" action="@Url.Action("ValidateRegister", "Account")">
     @Html.AntiForgeryToken()
+
+     <div class="form-outline mb-4">
+        <label for=@emailFieldId class="form-label">Email</label>
+        <input asp-for="Email" id=@emailFieldId type="text" name="Email" class="form-control" placeholder="Email" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+     <div class="form-outline mb-4">
+        <label for=@firstNameFieldId class="form-label">FirstName</label>
+        <input asp-for="FirstName" id=@firstNameFieldId type="text" name="FirstName" class="form-control" placeholder="FirstName" />
+        <span asp-validation-for="FirstName" class="text-danger"></span>
+    </div>
+
+     <div class="form-outline mb-4">
+        <label for=@lastNameFieldId class="form-label">LastName</label>
+        <input asp-for="LastName" id=@lastNameFieldId type="text" name="LastName" class="form-control" placeholder="LastName" />
+        <span asp-validation-for="LastName" class="text-danger"></span>
+    </div>
 
     <div class="form-outline mb-4">
         <label for=@userNameFieldId class="form-label">Username</label>
@@ -30,6 +53,14 @@
         <i id="@("close"+passwordFieldId)" class="fa-solid fa-eye-slash" onclick="toggleVisible('@passwordFieldId')"></i>
         <input asp-for="password" id=@passwordFieldId type="password" name="password" class="form-control" placeholder="Password"/>
         <span asp-validation-for="password" class="text-danger"></span>
+    </div>
+
+    <div class="form-outline mb-4">
+        <label for=@confirmPasswordFieldId class="form-label">Confirm Password</label>
+        <i id="@("open"+confirmPasswordFieldId)" class="fa-solid fa-eye" style="display: none;" onclick="toggleVisible('@confirmPasswordFieldId')"></i>
+        <i id="@("close"+confirmPasswordFieldId)" class="fa-solid fa-eye-slash" onclick="toggleVisible('@confirmPasswordFieldId')"></i>
+        <input asp-for="confirmPassword" id=@confirmPasswordFieldId type="password" name="confirmPassword" class="form-control" placeholder="Confirm Password"/>
+        <span asp-validation-for="confirmPassword" class="text-danger"></span>
     </div>
 
     <input id="submitButton" type="submit" value="Sign up" class="btn btn-primary" />

@@ -1,44 +1,40 @@
 ﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using PasswordManager.Models;
 using PasswordManager.Services;
 using PasswordManager.Utils;
 
-namespace password_manager.Controllers;
+namespace PasswordManager.Controllers;
 
-
-// currently using cookie based authentication
+// currently using jwt token based authentication
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> logger;
-    private readonly IHttpContextAccessor ctx;
     private readonly IDataAccess<AccountModel> dataAccess;
+    private readonly SignInManager<ApplicationUser> signinManager;
+    private readonly UserManager<ApplicationUser> userManager;
 
-    public HomeController(ILogger<HomeController> logger, IHttpContextAccessor ctx, IDataAccess<AccountModel> dataAccess)
+    public HomeController(ILogger<HomeController> logger, IDataAccess<AccountModel> dataAccess, SignInManager<ApplicationUser> signinManager, UserManager<ApplicationUser> userManager)
     {
         this.logger = logger;
-        this.ctx = ctx;
         this.dataAccess = dataAccess;
+        this.signinManager = signinManager;
+        this.userManager = userManager;
     }
 
     public IActionResult Index()
     {
-        // currently the user id is passed in. We will filter the table in the database for all passwords associated with this account, if there are any.
-        logger.LogWarning("entering home controller index page");
 
-        logger.LogWarning($"home index ctx user id: {ctx.HttpContext!.Session.GetString(SessionVariables.userId)}");
+        // logger.LogWarning($"entering home controller index page with {token}");
 
-        if (ctx.HttpContext!.User.Identity!.IsAuthenticated)
-        {
-            return View(new AccountModel());
-        }
+        return View(new AccountModel());
 
-        TempData["sessionExpired"] = "The session has expired. Please Log in again.";
+        // TempData["sessionExpired"] = "The session has expired. Please Log in again.";
 
-        return RedirectToAction("Login", "Account");
+        // return RedirectToAction("Login", "Account");
     }
 
     [HttpPost]
@@ -46,7 +42,7 @@ public class HomeController : Controller
     {
         try
         {
-            await dataAccess.Post(model, ctx.HttpContext!.Session.GetString(SessionVariables.userId)!);
+            await dataAccess.Post(model, HttpContext.Session.GetString(SessionVariables.userId)!);
             TempData["addedAccount"] = "account has been successfully added";
         }
         catch (Exception e)
@@ -76,11 +72,11 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Edit(string accountId, int idx)
     {
-        if (ctx.HttpContext!.User.Identity!.IsAuthenticated)
+        if (HttpContext.User.Identity!.IsAuthenticated)
         {
             logger.LogWarning($"editing user password account: {accountId}");
             var model = await dataAccess.GetOne(accountId);
-            return View(new EditViewModel {accountModel = model!, editIdx = idx});
+            return View(new EditViewModel { accountModel = model!, editIdx = idx });
         }
 
         TempData["sessionExpired"] = "The session has expired. Please Log in again.";
@@ -95,10 +91,10 @@ public class HomeController : Controller
 
         if
         (
-            string.IsNullOrEmpty(model.accountModel.title)         ||
-            string.IsNullOrEmpty(model.accountModel.username)      ||
-            string.IsNullOrEmpty(model.accountModel.password)      ||
-            string.IsNullOrWhiteSpace(model.accountModel.title)    ||
+            string.IsNullOrEmpty(model.accountModel.title) ||
+            string.IsNullOrEmpty(model.accountModel.username) ||
+            string.IsNullOrEmpty(model.accountModel.password) ||
+            string.IsNullOrWhiteSpace(model.accountModel.title) ||
             string.IsNullOrWhiteSpace(model.accountModel.username) ||
             string.IsNullOrWhiteSpace(model.accountModel.password)
         )
@@ -121,10 +117,10 @@ public class HomeController : Controller
 
         if
         (
-            string.IsNullOrEmpty(model.title)         ||
-            string.IsNullOrEmpty(model.username)      ||
-            string.IsNullOrEmpty(model.password)      ||
-            string.IsNullOrWhiteSpace(model.title)    ||
+            string.IsNullOrEmpty(model.title) ||
+            string.IsNullOrEmpty(model.username) ||
+            string.IsNullOrEmpty(model.password) ||
+            string.IsNullOrWhiteSpace(model.title) ||
             string.IsNullOrWhiteSpace(model.username) ||
             string.IsNullOrWhiteSpace(model.password)
         )
@@ -142,22 +138,31 @@ public class HomeController : Controller
     [HttpGet]
     public async Task<PartialViewResult> FilterAccounts(string filterTerm)
     {
-        var userId = ctx.HttpContext!.Session.GetString(SessionVariables.userId)!;
-        return PartialView("_AccountsListView", new AccountListViewModel { accountModels = await dataAccess.FilterBy(userId, filterTerm) as List<AccountModel>, filterTerm = filterTerm });
+        if (filterTerm is null)
+            filterTerm = "";
+        var userId = HttpContext.Session.GetString(SessionVariables.userId);
+        var accountModels = await dataAccess.FilterBy(userId!, filterTerm) as List<AccountModel>;
+        return PartialView("_AccountsListView", new AccountListViewModel { accountModels = accountModels!, filterTerm = filterTerm });
     }
 
-    public async Task LogOut()
+    public async Task<IActionResult> LogOut()
     {
-        await ctx.HttpContext!.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        ctx.HttpContext!.Response.Headers["Cache-Control"] = "no-store";
-        ctx.HttpContext.Response.Cookies.Delete(".AspNetCore.Session");
-        ctx.HttpContext.Response.Cookies.Delete(".AspNetCore.Antiforgery.2AllGjtG7jM");
-        ctx.HttpContext.Session.Clear();
         logger.LogWarning("logging user out");
-        ctx.HttpContext!.Response.Redirect(Url.Action("Login", "Account")!);
+
+        var userId = HttpContext.Session.GetString(SessionVariables.userId)!;
+
+        var user = await userManager.FindByIdAsync(userId);
+
+        logger.LogWarning($"{signinManager.IsSignedIn(HttpContext.User)}");
+
+        await signinManager.SignOutAsync();
+
+        logger.LogWarning($"{signinManager.IsSignedIn(HttpContext.User)}");
+
 
         // sign the user out and redirect to landing page
-        // return RedirectToAction("Login", "Account");
+        HttpContext.Session.Clear();
+        return RedirectToAction(nameof(AccountController.Login), "Account");
     }
 
     public IActionResult Privacy()
