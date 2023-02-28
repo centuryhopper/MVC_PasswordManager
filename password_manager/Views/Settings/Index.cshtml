@@ -3,17 +3,30 @@
 
 @{
     ViewData["Title"] = "Settings";
+    var userId = ctx.HttpContext!.Session.GetString(SessionVariables.userId);
 }
 
 <div class="text-center">
-    <p>@(ctx.HttpContext!.Session.GetString(SessionVariables.userId) ?? "NULL")</p>
-    <div class="list-group">
-        <a
-            class="list-group-item list-group-item-action text-danger"
-            href="@Url.Action("DeleteAccount", "Settings", new {})"
-            onclick="return confirm('Are you sure you want to delete your account? All your passwords will be lost and cannot be recovered!')">
-            Delete account
-        </a>
-    </div>
+    @if (userId is not null)
+    {
+        <div class="list-group">
+            <span id="delete_@userId">
+                <a
+                    href="#"
+                    class="list-group-item list-group-item-action text-danger"
+                    onclick="confirmDelete('@userId', true)"
+                >
+                    Delete account
+                </a>
+            </span>
+
+            <span id="confirmDelete_@userId" style="display:none">
+                <span>Are you sure you want to delete your account? All your passwords will be lost and cannot be recovered!</span>
+                <a class="list-group-item list-group-item-action text-danger my-4" href="@Url.Action("DeleteAccount", "Settings", new {})">Yes</a>
+                <a class="list-group-item list-group-item-action text-primary" href="#" onclick="confirmDelete('@userId', false)">No</a>
+            </span>
+        </div>
+
+    }
 </div>
 

@@ -25,7 +25,7 @@ public class AccountController : Controller
 
     public IActionResult Login()
     {
-        logger.LogWarning("log in page");
+        // logger.LogWarning("log in page");
 
         return View();
     }
@@ -57,16 +57,24 @@ public class AccountController : Controller
             if (user is not null && password)
             {
                 await signInManager.SignInAsync(user, isPersistent: false);
-                var roles = await userManager.GetRolesAsync(user!);
-                if (roles.Contains("Admin"))
-                {
-                    HttpContext.Session.SetString(SessionVariables.userId, user?.Id!);
-                    return RedirectToAction(nameof(Success));
-                }
+                // var roles = await userManager.GetRolesAsync(user!);
+                // if (roles.Contains("Admin"))
+                // {
+                HttpContext.Session.SetString(SessionVariables.userId, user?.Id!);
+                return RedirectToAction(nameof(HomeController.Index), "Home");
+                // }
             }
             else
             {
-                ModelState.AddModelError(String.Empty, "Invalid login attempt.");
+                ModelState.AddModelError(String.Empty, "Incorrect username or password.");
+
+                // Retrieve the list of errors
+                var errors = ModelState.Values.SelectMany(v => v.Errors);
+
+                errors.ToList().ForEach(e => logger.LogWarning(e.ErrorMessage));
+
+                TempData["incorrectLogin"] = string.Join("\n", errors.Select(e=>e.ErrorMessage).ToList());
+
                 return RedirectToAction(nameof(Login));
             }
         }
@@ -75,7 +83,6 @@ public class AccountController : Controller
         // If we got this far, something failed, redisplay form
         return RedirectToAction(nameof(Login));
     }
-
 
     [HttpPost]
     [AllowAnonymous]
@@ -101,20 +108,20 @@ public class AccountController : Controller
                 await signInManager.SignInAsync(user, isPersistent: false);
 
                 // make sure the role exists
-                var roleExist = await roleManager.RoleExistsAsync("Admin");
+                var roleExist = await roleManager.RoleExistsAsync(Roles.REG);
                 if (!roleExist)
                 {
-                    var roleResult = await roleManager.CreateAsync(new IdentityRole("Admin"));
+                    var roleResult = await roleManager.CreateAsync(new IdentityRole(Roles.REG));
                 }
 
                 // lets just assign everyone to admin role for now
-                await userManager.AddToRoleAsync(user, "Admin");
+                await userManager.AddToRoleAsync(user, Roles.REG);
 
                 var userId = user?.Id!;
 
                 HttpContext.Session.SetString(SessionVariables.userId, userId);
 
-                return RedirectToAction(nameof(Success));
+                return RedirectToAction(nameof(HomeController.Index), "Home");
             }
 
             foreach (var error in result.Errors)

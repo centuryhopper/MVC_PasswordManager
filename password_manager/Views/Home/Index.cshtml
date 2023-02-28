@@ -1,19 +1,23 @@
 ﻿@inject IHttpContextAccessor ctx
+@inject UserManager<ApplicationUser> userManager
 @using PasswordManager.Models
 @using PasswordManager.Utils
 @model AccountModel
 
 @{
     ViewData["Title"] = "Password List";
+    var user = await userManager.FindByIdAsync(ctx.HttpContext!.Session.GetString(SessionVariables.userId)!);
 }
 
 <div class="text-center text-wrap">
     <h1 class="display-4">Passwords</h1>
-    @* <p class="text-wrap">@Model.accountModel.userId</p>
-    <ul>
-        <li>@ctx.HttpContext!.Session.GetString("userId")</li>
-        <li>@ctx.HttpContext.Session.GetInt32("userIdInt")</li>
-    </ul> *@
+    @if (user is not null && await userManager.IsInRoleAsync(user, "Admin"))
+    {
+        <ul style="list-style: none">
+            <li>Admin ID:</li>
+            <li>@ctx.HttpContext!.Session.GetString(SessionVariables.userId)</li>
+        </ul>
+    }
 
     @if (TempData["editError"] is not null)
     {

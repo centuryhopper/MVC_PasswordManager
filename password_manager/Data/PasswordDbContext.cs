@@ -28,7 +28,7 @@ public class PasswordDbContext : IdentityDbContext<ApplicationUser>
         modelBuilder.Entity<AccountModel>()
             .HasOne(account => account.user)
             .WithMany(user => user.accounts)
-            .HasForeignKey("Id")
+            .HasForeignKey(nameof(AccountModel.userId))
             .IsRequired(true);
     }
 

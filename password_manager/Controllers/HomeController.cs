@@ -30,6 +30,8 @@ public class HomeController : Controller
 
         // logger.LogWarning($"entering home controller index page with {token}");
 
+        var userId = HttpContext.Session.GetString(SessionVariables.userId);
+
         return View(new AccountModel());
 
         // TempData["sessionExpired"] = "The session has expired. Please Log in again.";

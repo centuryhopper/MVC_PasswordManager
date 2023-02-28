@@ -1,7 +1,6 @@
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using PasswordManager.Models;
-using PasswordManager.Services;
 using PasswordManager.Utils;
 
 namespace PasswordManager.Controllers
@@ -9,12 +8,12 @@ namespace PasswordManager.Controllers
     public class SettingsController : Controller
     {
         private readonly ILogger<SettingsController> logger;
-        private readonly IAuthenticationService<UserModel> authService;
+        private readonly UserManager<ApplicationUser> userManager;
 
-        public SettingsController(ILogger<SettingsController> logger, IAuthenticationService<UserModel> authService)
+        public SettingsController(ILogger<SettingsController> logger, UserManager<ApplicationUser> userManager)
         {
             this.logger = logger;
-            this.authService = authService;
+            this.userManager = userManager;
         }
 
         public IActionResult Index()
@@ -24,11 +23,30 @@ namespace PasswordManager.Controllers
 
         public async Task<IActionResult> DeleteAccount()
         {
-            // call delete account method from service
-            await authService.Delete(HttpContext.Session.GetString(SessionVariables.userId)!);
+            var userId = HttpContext.Session.GetString(SessionVariables.userId)!;
 
-            // redirect client to the login page
-            return RedirectToAction("Index", "Login");
+            var user = await userManager.FindByIdAsync(userId);
+
+            if (user is null)
+            {
+                TempData["DeleteAccountError"] = "Error on deleting your own account";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var result = await userManager.DeleteAsync(user);
+
+            if (result.Succeeded)
+            {
+                // redirect client to the login page
+                return RedirectToAction(nameof(AccountController.Login), "Account");
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError("", error.Description);
+            }
+
+            return RedirectToAction(nameof(AccountController.Login), "Account");
         }
     }
 }

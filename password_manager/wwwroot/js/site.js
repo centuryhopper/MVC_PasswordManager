@@ -26,5 +26,18 @@ var toggleVisible = (id) =>
     }
 }
 
+var confirmDelete = (uniqueId, isDeleteClicked) => {
+    var deleteSpan = 'delete_' + uniqueId;
+    var confirmDeleteSpan = 'confirmDelete_' + uniqueId;
+
+    if (isDeleteClicked) {
+        $('#' + deleteSpan).hide();
+        $('#' + confirmDeleteSpan).show();
+    } else {
+        $('#' + deleteSpan).show();
+        $('#' + confirmDeleteSpan).hide();
+    }
+}
+
 
 
