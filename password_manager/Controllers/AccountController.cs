@@ -73,14 +73,9 @@ public class AccountController : Controller
 
             var emailBody = $"Dear {user.UserName}, please click the following link to reset your password: {passwordResetLink}";
 
-            try
-            {
-                await emailSender.SendEmailAsync(model.Email, "Password reset request", emailBody);
-            }
-            catch (System.Exception ex)
-            {
-                 logger.LogError(ex.Message);
-            }
+            var subject = "Password reset request";
+
+            await Helpers.SendEmail<AccountController>(emailSender, model.Email, subject, emailBody, logger);
 
             // Send the user to Forgot Password Confirmation view
             return View("ForgotPasswordConfirmation");
@@ -162,13 +157,19 @@ public class AccountController : Controller
         ViewData["ReturnUrl"] = returnUrl;
         if (ModelState.IsValid)
         {
-            var user = await userManager.FindByNameAsync(model.username);
+            var user = await userManager.FindByNameAsync(model.username)!;
 
-            var password = await userManager.CheckPasswordAsync(user!, model.password);
+            if (user != null && !user.EmailConfirmed &&
+                    (await userManager.CheckPasswordAsync(user, model.password)))
+            {
+                ModelState.AddModelError(string.Empty, "Email not confirmed yet");
+                TempData["incorrectLogin"] = Helpers.GetErrors<AccountController>(ModelState);
+                return View(model);
+            }
 
-            // var result = await signInManager.PasswordSignInAsync(model.username, model.password, isPersistent: false, lockoutOnFailure: false);
+            var result = await signInManager.PasswordSignInAsync(model.username, model.password, isPersistent: false, lockoutOnFailure: false);
 
-            if (user is not null && password)
+            if (user is not null && result.Succeeded)
             {
                 await signInManager.SignInAsync(user, isPersistent: false);
                 // var roles = await userManager.GetRolesAsync(user!);
@@ -191,6 +192,31 @@ public class AccountController : Controller
         TempData["incorrectLogin"] = "something failed, redisplaying login...";
         // If we got this far, something failed, redisplay form
         return RedirectToAction(nameof(Login));
+    }
+
+    [AllowAnonymous]
+    public async Task<IActionResult> ConfirmEmail(string userId, string token)
+    {
+        if (userId is null || token is null)
+        {
+            TempData["incorrectLogin"] = "couldn't successfully confirm email";
+            return RedirectToAction(nameof(Login));
+        }
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null)
+        {
+            return View("Error", new ErrorViewModel {ErrorMessage = $"The User ID {userId} is invalid"});
+        }
+
+        var result = await userManager.ConfirmEmailAsync(user, token);
+        if (result.Succeeded)
+        {
+            return View();
+        }
+
+        return View("Error", new ErrorViewModel {ErrorMessage = "Email cannot be confirmed"});
+
     }
 
     [HttpPost]
@@ -216,23 +242,35 @@ public class AccountController : Controller
 
             if (result.Succeeded)
             {
-                await signInManager.SignInAsync(user, isPersistent: false);
+                var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+
+                var confirmationLink = Url.Action(nameof(AccountController.ConfirmEmail), "Account",
+                    new { userId = user.Id, token = token }, Request.Scheme);
+
+                if (signInManager.IsSignedIn(User) && User.IsInRole(Roles.ADMIN))
+                {
+                    return RedirectToAction(nameof(ManageController.Index), "Manage");
+                }
 
                 // make sure the role exists
                 var roleExist = await roleManager.RoleExistsAsync(Roles.REG);
                 if (!roleExist)
                 {
-                    var roleResult = await roleManager.CreateAsync(new IdentityRole(Roles.REG));
+                    await roleManager.CreateAsync(new IdentityRole(Roles.REG));
                 }
 
                 // lets just assign everyone to admin role for now
                 await userManager.AddToRoleAsync(user, Roles.REG);
 
-                var userId = user?.Id!;
+                var subject = "Password Manager Account Confirmation Link";
 
-                HttpContext.Session.SetString(SessionVariables.userId, userId);
+                var emailBody = $"Please use this confirmation link to confirm your email address: {confirmationLink}";
 
-                return RedirectToAction(nameof(HomeController.Index), "Home");
+
+                await Helpers.SendEmail<AccountController>(emailSender, model.Email, subject, emailBody, logger);
+
+
+                return View("Success", new SuccessViewModel { SuccessMessage = "Before you can Login, please confirm your email by clicking on the confirmation link we have emailed you", SuccessTitle = "Registration successful" });
             }
 
             foreach (var error in result.Errors)
@@ -251,6 +289,6 @@ public class AccountController : Controller
         TempData["userAlreadyExists"] = msg;
 
         return RedirectToAction(nameof(Register));
-
     }
+
 }

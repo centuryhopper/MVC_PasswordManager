@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using PasswordManager.Models;
+using PasswordManager.Utils;
 
 namespace PasswordManager.Data;
 
@@ -9,7 +11,6 @@ public class PasswordDbContext : IdentityDbContext<ApplicationUser>
 {
     public PasswordDbContext(DbContextOptions<PasswordDbContext> options) : base(options)
     {
-
     }
 
     // increment the id of the model
@@ -30,6 +31,23 @@ public class PasswordDbContext : IdentityDbContext<ApplicationUser>
             .WithMany(user => user.accounts)
             .HasForeignKey(nameof(AccountModel.userId))
             .IsRequired(true);
+
+        // A DbContext instance cannot be used inside 'OnModelCreating' in any way that makes use of the model that is being created.
+        // var users = Users;
+        // var roles = Roles;
+        // var userRoles = UserRoles;
+
+        // seed an admin for testing purposes
+        // call the Seed method to create roles and a user with the Admin role
+        // call the Seed method to create roles and a user with the Admin role
+        try
+        {
+            modelBuilder.Seed();
+        }
+        catch (Exception e)
+        {
+
+        }
     }
 
     public DbSet<AccountModel> PasswordTableEF { get; set; }

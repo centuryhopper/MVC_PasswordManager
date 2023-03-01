@@ -12,12 +12,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.UI.Services;
 
 /*
+
 TODO: clean up and document code
 TODO: add unit tests for password encrypt/decrypt methods
 
-
 TODO: add authorizations and roles to crud controllers (Home in this case)
+
 TODO: add multi-factor auth
+
+TODO: Allow users to change their own username, email, password, firstname, lastname, and role
+
 */
 
 
@@ -108,7 +112,20 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 // });
 
 // identity framework setup
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<PasswordDbContext>().AddDefaultTokenProviders();
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    // must confirm email
+    options.SignIn.RequireConfirmedEmail = true;
+
+    // keep it stupid simple JUST for now
+    options.Password.RequiredLength = 1;
+    options.Password.RequiredUniqueChars = 1;
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+
+}).AddEntityFrameworkStores<PasswordDbContext>().AddDefaultTokenProviders();
 
 
 // link to postgreSQL db for entity framework

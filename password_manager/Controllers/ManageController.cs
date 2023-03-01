@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using PasswordManager.Models;
 using PasswordManager.Utils;
 
-namespace password_manager.Controllers;
+namespace PasswordManager.Controllers;
 
 public class ManageController : Controller
 {
