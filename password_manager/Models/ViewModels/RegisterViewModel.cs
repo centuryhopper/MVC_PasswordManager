@@ -1,10 +1,13 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc;
+
 
 namespace PasswordManager.Models;
 
 public class RegisterViewModel
 {
     [Required(ErrorMessage="Email is required"), StringLength(32), Display(Name="Email")]
+    [Remote(action: "IsEmailInUse", controller: "Account")]
     public string Email { get; set; } = null!;
 
     [Required(ErrorMessage="FirstName is required"), StringLength(32), Display(Name="FirstName")]

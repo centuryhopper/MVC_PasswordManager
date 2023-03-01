@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using PasswordManager.Models;
 using PasswordManager.Utils;
@@ -13,14 +14,16 @@ public class AccountController : Controller
     private readonly UserManager<ApplicationUser> userManager;
     private readonly SignInManager<ApplicationUser> signInManager;
     private readonly RoleManager<IdentityRole> roleManager;
+    private readonly IEmailSender emailSender;
 
-    public AccountController(ILogger<AccountController> logger, IConfiguration configuration, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<IdentityRole> roleManager)
+    public AccountController(ILogger<AccountController> logger, IConfiguration configuration, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<IdentityRole> roleManager, IEmailSender emailSender)
     {
         this.logger = logger;
         this.configuration = configuration;
         this.userManager = userManager;
         this.signInManager = signInManager;
         this.roleManager = roleManager;
+        this.emailSender = emailSender;
     }
 
     public IActionResult Login()
@@ -35,9 +38,120 @@ public class AccountController : Controller
         return View();
     }
 
-    public IActionResult Success()
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult ForgotPassword()
     {
         return View();
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        // Find the user by email
+        var user = await userManager.FindByEmailAsync(model.Email);
+
+        // If the user is found AND Email is confirmed
+        if (user is not null && await userManager.IsEmailConfirmedAsync(user))
+        {
+            // Generate the reset password token
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+
+            // Build the password reset link
+            var passwordResetLink = Url.Action("ResetPassword", "Account",
+                    new { email = model.Email, token = token }, protocol: Request.Scheme);
+
+            // Log the password reset link
+            // TODO: instead of logging, actually send it to the user provided email
+            logger.Log(LogLevel.Warning, passwordResetLink);
+
+            var emailBody = $"Dear {user.UserName}, please click the following link to reset your password: {passwordResetLink}";
+
+            try
+            {
+                await emailSender.SendEmailAsync(model.Email, "Password reset request", emailBody);
+            }
+            catch (System.Exception ex)
+            {
+                 logger.LogError(ex.Message);
+            }
+
+            // Send the user to Forgot Password Confirmation view
+            return View("ForgotPasswordConfirmation");
+        }
+
+        // To avoid account enumeration and brute force attacks, don't
+        // reveal that the user does not exist or is not confirmed
+        return View("ForgotPasswordConfirmation");
+
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult ResetPassword(string token, string email)
+    {
+        // If password reset token or email is null, most likely the
+        // user tried to tamper the password reset link
+        if (token == null || email == null)
+        {
+            ModelState.AddModelError("", "Invalid password reset token");
+        }
+        return View();
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+    {
+        if (ModelState.IsValid)
+        {
+            // Find the user by email
+            var user = await userManager.FindByEmailAsync(model.Email);
+
+            if (user != null)
+            {
+                // reset the user password
+                var result = await userManager.ResetPasswordAsync(user, model.Token, model.Password);
+                if (result.Succeeded)
+                {
+                    logger.LogWarning("Successfully reset password");
+                    return View("ResetPasswordConfirmation");
+                }
+                // Display validation errors. For example, password reset token already
+                // used to change the password or password complexity rules not met
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError("", error.Description);
+                }
+                return View(model);
+            }
+
+            // To avoid account enumeration and brute force attacks, don't
+            // reveal that the user does not exist
+            return View("ResetPasswordConfirmation");
+        }
+        // Display validation errors if model state is not valid
+        return View(model);
+    }
+
+    [AcceptVerbs("Get", "Post")]
+    [AllowAnonymous]
+    public async Task<IActionResult> IsEmailInUse(string email)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        if (user is null)
+        {
+            logger.LogWarning("Email you provided is fine");
+            return Json(true);
+        }
+
+        return Json($"Email {email} is already in use");
     }
 
     [HttpPost]
@@ -68,12 +182,7 @@ public class AccountController : Controller
             {
                 ModelState.AddModelError(String.Empty, "Incorrect username or password.");
 
-                // Retrieve the list of errors
-                var errors = ModelState.Values.SelectMany(v => v.Errors);
-
-                errors.ToList().ForEach(e => logger.LogWarning(e.ErrorMessage));
-
-                TempData["incorrectLogin"] = string.Join("\n", errors.Select(e=>e.ErrorMessage).ToList());
+                TempData["incorrectLogin"] = Helpers.GetErrors<AccountController>(ModelState);
 
                 return RedirectToAction(nameof(Login));
             }
@@ -91,7 +200,9 @@ public class AccountController : Controller
     {
         logger.LogWarning($"registering {model}");
 
-        if (ModelState.IsValid)
+        var existingUser = await userManager.FindByEmailAsync(model.Email);
+
+        if (existingUser is null && ModelState.IsValid)
         {
             var user = new ApplicationUser
             {
@@ -130,7 +241,14 @@ public class AccountController : Controller
             }
         }
 
-        TempData["userAlreadyExists"] = "Something went wrong with registering";
+        var msg = Helpers.GetErrors<AccountController>(ModelState);
+
+        if (String.IsNullOrEmpty(msg))
+        {
+            msg = "user with the email you provided already exists.";
+        }
+
+        TempData["userAlreadyExists"] = msg;
 
         return RedirectToAction(nameof(Register));
 

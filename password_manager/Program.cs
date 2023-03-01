@@ -7,15 +7,17 @@ using PasswordManager.Data;
 using PasswordManager.Models;
 using PasswordManager.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Net;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 /*
-
 TODO: clean up and document code
 TODO: add unit tests for password encrypt/decrypt methods
+
+
 TODO: add authorizations and roles to crud controllers (Home in this case)
-TODO: add identity framework to application
-
-
+TODO: add multi-factor auth
 */
 
 
@@ -43,6 +45,9 @@ builder.Services.AddScoped<IDataAccess<AccountModel>, EFService>();
 
 // this singleton is meant to be used in non-controller classes that have a DI for the httpcontext accessor
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+builder.Services.AddTransient<IEmailSender, EmailSender>();
+
 
 builder.Services.AddDistributedMemoryCache();
 
@@ -95,8 +100,16 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     // options.AccessDeniedPath = "/AccessDenied";
 });
 
+// builder.Services.AddAuthorization(options =>
+// {
+//     options.FallbackPolicy = new AuthorizationPolicyBuilder()
+//         .RequireAuthenticatedUser()
+//         .Build();
+// });
+
 // identity framework setup
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<PasswordDbContext>().AddDefaultTokenProviders();
+
 
 // link to postgreSQL db for entity framework
 builder.Services.AddDbContextPool<PasswordDbContext>(
@@ -119,6 +132,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseSession();
@@ -131,6 +145,19 @@ app.UseCors(
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// redirect the authorized access page to this route
+// default in asp.net core is /Account/AccessDenied
+app.UseStatusCodePagesWithRedirects("/Home/AccessDenied?code={0}");
+
+// app.Map("/AccessDenied", builder =>
+// {
+//     builder.Run(async context =>
+//     {
+//         context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+//         await context.Response.WriteAsync("Access Denied :/");
+//     });
+// });
 
 app.UseCookiePolicy();
 
