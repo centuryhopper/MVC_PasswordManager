@@ -10,17 +10,14 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using PasswordManager.Utils;
 
 /*
-
 TODO: clean up and document code
+
 TODO: add unit tests for password encrypt/decrypt methods
 
-TODO: add authorizations and roles to crud controllers (Home in this case)
-
 TODO: add multi-factor auth
-
-TODO: Allow users to change their own username, email, password, firstname, lastname, and role
 
 */
 
@@ -70,14 +67,13 @@ builder.Services.AddCors(p => p.AddPolicy(name: "client_policy", build =>
     build.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
 }));
 
-// JWT token auth set up
+#region JWT token auth set up
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
     options =>
 {
     var secretKey = builder.Configuration.GetSection("AppSettings:Token").Value!;
     var issuer = builder.Configuration.GetSection("AppSettings:Issuer").Value!;
     var audience = builder.Configuration.GetSection("AppSettings:Audience").Value!;
-
     // options.RequireHttpsMetadata = false;
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
@@ -91,18 +87,32 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8
                 .GetBytes(secretKey)),
     };
-});
+    options.Events.OnMessageReceived = (context) => {
 
-// authentication cookie middleware
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-.AddCookie(options =>
-{
-    options.LoginPath = "/Login";
-    options.Cookie.Name = "CookieMadeByLeo";
-    options.Cookie.HttpOnly = true;
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-    // options.AccessDeniedPath = "/AccessDenied";
+        if (context.Request.Cookies.ContainsKey(Constants.X_ACCESS_TOKEN))
+        {
+            context.Token = context.Request.Cookies[Constants.X_ACCESS_TOKEN];
+        }
+
+        return Task.CompletedTask;
+    };
 });
+#endregion
+
+
+#region authentication cookie middleware
+// builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+// .AddCookie(options =>
+// {
+//     options.Cookie.SameSite = SameSiteMode.Strict;
+//     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+//     options.Cookie.HttpOnly = true;
+//     // options.LoginPath = "/Account/Login";
+//     // options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+//     // options.Cookie.Name = "CookieMadeByLeo";
+//     // options.AccessDeniedPath = "/AccessDenied";
+// });
+#endregion
 
 // builder.Services.AddAuthorization(options =>
 // {
@@ -127,6 +137,12 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 }).AddEntityFrameworkStores<PasswordDbContext>().AddDefaultTokenProviders();
 
+// builder.Services.AddAuthentication(options =>
+// {
+//     options.DefaultScheme = IdentityConstants.ApplicationScheme;
+//     options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+// })
+// .AddIdentityCookies();
 
 // link to postgreSQL db for entity framework
 builder.Services.AddDbContextPool<PasswordDbContext>(
@@ -148,7 +164,6 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

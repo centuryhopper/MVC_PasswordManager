@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -22,12 +18,12 @@ public class ManageController : Controller
         this.logger = logger;
     }
 
-    [Authorize(Roles=Roles.ADMIN)]
+    [Authorize(Roles = Constants.ADMIN)]
     public async Task<IActionResult> Index()
     {
         var users = await (from user in userManager.Users select user).ToListAsync();
         var roles = new List<IEnumerable<string>>(users.Count);
-        foreach(var user in users)
+        foreach (var user in users)
         {
             var role = await userManager.GetRolesAsync(user);
             roles.Add(role.AsEnumerable());

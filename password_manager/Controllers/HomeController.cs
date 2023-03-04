@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +9,7 @@ using Newtonsoft.Json;
 using PasswordManager.Models;
 using PasswordManager.Services;
 using PasswordManager.Utils;
+using System.Text;
 
 namespace PasswordManager.Controllers;
 
@@ -15,15 +18,52 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> logger;
     private readonly IDataAccess<AccountModel> dataAccess;
-    private readonly SignInManager<ApplicationUser> signinManager;
     private readonly UserManager<ApplicationUser> userManager;
+    private readonly IConfiguration configuration;
 
-    public HomeController(ILogger<HomeController> logger, IDataAccess<AccountModel> dataAccess, SignInManager<ApplicationUser> signinManager, UserManager<ApplicationUser> userManager)
+    public HomeController(ILogger<HomeController> logger, IDataAccess<AccountModel> dataAccess, UserManager<ApplicationUser> userManager, IConfiguration configuration)
     {
         this.logger = logger;
         this.dataAccess = dataAccess;
-        this.signinManager = signinManager;
         this.userManager = userManager;
+        this.configuration = configuration;
+    }
+
+    private async Task Refresh()
+    {
+        if (!(Request.Cookies.TryGetValue(Constants.X_USERNAME, out var _) && Request.Cookies.TryGetValue(Constants.X_REFRESH_TOKEN, out var oldRefreshToken)))
+        {
+            logger.LogError($"Error. Couldn't generate refresh token");
+            return;
+        }
+
+        string currentToken = Request.Cookies[Constants.X_ACCESS_TOKEN]!;
+
+        var currentTokenExpiration = DateTime.Parse(TokenManager.ValidateToken(currentToken, configuration.GetSection("AppSettings:Token").Value!, ClaimTypes.Expiration)!);
+
+        if (DateTime.Compare(DateTime.Now, currentTokenExpiration) < 0)
+        {
+            logger.LogWarning("Token has not expired yet");
+            return;
+        }
+
+        // var user = await userManager.Users.FirstOrDefaultAsync(i => i.UserName == userName && i.RefreshToken == refreshToken);
+
+        // if (user == null)
+        //     return BadRequest();
+
+        var user = (await userManager.FindByIdAsync(HttpContext.Session.GetString(Constants.userId)!))!;
+
+        var (token, refreshToken, dateCreated, expires) = TokenManager.createJwtToken(user, configuration.GetSection("AppSettings:Token").Value!);
+
+        // user.RefreshToken = Guid.NewGuid().ToString();
+
+        // await _userManager.UpdateAsync(user);
+
+        // Overwrite old cookie values
+        Response.Cookies.Append(Constants.X_ACCESS_TOKEN, token, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Strict });
+        // Response.Cookies.Append(Constants.X_USERNAME, user.UserName!, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Strict });
+        Response.Cookies.Append(Constants.X_REFRESH_TOKEN, refreshToken, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Strict });
     }
 
     [HttpGet]
@@ -33,16 +73,22 @@ public class HomeController : Controller
         return View();
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
+        // var cookieSize = Encoding.UTF8.GetByteCount("hTy%2BC4dZSUKhUCCANpRm5rmUimoDbXGz9rjRVTJqT0E%3D");
+
+        await Refresh();
+        // var isAuthenticated = HttpContext.User.Identity!.IsAuthenticated;
+        // var name = HttpContext.User.Identity.Name;
+        // var authType = HttpContext.User.Identity.AuthenticationType;
 
         // logger.LogWarning($"entering home controller index page with {token}");
 
-        var userId = HttpContext.Session.GetString(SessionVariables.userId);
+        var userId = HttpContext.Session.GetString(Constants.userId);
 
         return View(new AccountModel());
 
-        // TempData["sessionExpired"] = "The session has expired. Please Log in again.";
+        // TempData[Constants.SESSION_EXPIRED] = "The session has expired. Please Log in again.";
 
         // return RedirectToAction("Login", "Account");
     }
@@ -50,15 +96,17 @@ public class HomeController : Controller
     [HttpPost]
     public async Task<ActionResult> AddAccount(AccountModel model)
     {
+        await Refresh();
+
         try
         {
-            await dataAccess.Post(model, HttpContext.Session.GetString(SessionVariables.userId)!);
-            TempData["addedAccount"] = "account has been successfully added";
+            await dataAccess.Post(model, HttpContext.Session.GetString(Constants.userId)!);
+            TempData[Constants.ADDED_ACCOUNT] = "account has been successfully added";
         }
         catch (Exception e)
         {
             logger.LogError(e.Message);
-            TempData["errorAddingAccount"] = "an error has occurred in adding an account";
+            TempData[Constants.ERROR_ADD_ACCOUNT] = "an error has occurred in adding an account";
         }
         return RedirectToAction("Index", "Home");
     }
@@ -66,6 +114,8 @@ public class HomeController : Controller
     // Cannot pass model back up for some reason
     public async Task<ActionResult> Delete(string userId, string accountId)
     {
+        await Refresh();
+
         try
         {
             var model = await dataAccess.Delete(accountId);
@@ -85,11 +135,12 @@ public class HomeController : Controller
         if (HttpContext.User.Identity!.IsAuthenticated)
         {
             logger.LogWarning($"editing user password account: {accountId}");
+            await Refresh();
             var model = await dataAccess.GetOne(accountId);
             return View(new EditViewModel { accountModel = model!, editIdx = idx });
         }
 
-        TempData["sessionExpired"] = "The session has expired. Please Log in again.";
+        TempData[Constants.SESSION_EXPIRED] = "The session has expired. Please Log in again.";
 
         return RedirectToAction("Login", "Account");
     }
@@ -110,7 +161,7 @@ public class HomeController : Controller
         )
         {
             logger.LogWarning("all fields should not be empty");
-            TempData["editError"] = "Please make sure you have entered all the proper fields when editing your password account.";
+            TempData[Constants.ERROR_EDIT_ACCOUNT] = "Please make sure you have entered all the proper fields when editing your password account.";
             return RedirectToAction("Index", "Home");
         }
 
@@ -136,7 +187,7 @@ public class HomeController : Controller
         )
         {
             logger.LogWarning("all fields should not be empty");
-            TempData["editError"] = "Please make sure you have entered all the proper fields when editing your password account.";
+            TempData[Constants.ERROR_EDIT_ACCOUNT] = "Please make sure you have entered all the proper fields when editing your password account.";
             return BadRequest();
         }
 
@@ -150,29 +201,9 @@ public class HomeController : Controller
     {
         if (filterTerm is null)
             filterTerm = "";
-        var userId = HttpContext.Session.GetString(SessionVariables.userId);
+        var userId = HttpContext.Session.GetString(Constants.userId);
         var accountModels = await dataAccess.FilterBy(userId!, filterTerm) as List<AccountModel>;
         return PartialView("_AccountsListView", new AccountListViewModel { accountModels = accountModels!, filterTerm = filterTerm });
-    }
-
-    public async Task<IActionResult> LogOut()
-    {
-        logger.LogWarning("logging user out");
-
-        var userId = HttpContext.Session.GetString(SessionVariables.userId)!;
-
-        var user = await userManager.FindByIdAsync(userId);
-
-        logger.LogWarning($"{signinManager.IsSignedIn(HttpContext.User)}");
-
-        await signinManager.SignOutAsync();
-
-        logger.LogWarning($"{signinManager.IsSignedIn(HttpContext.User)}");
-
-
-        // sign the user out and redirect to landing page
-        HttpContext.Session.Clear();
-        return RedirectToAction(nameof(AccountController.Login), "Account");
     }
 
     public IActionResult Privacy()

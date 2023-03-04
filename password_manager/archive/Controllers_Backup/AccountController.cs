@@ -65,14 +65,14 @@
 
 //             if (ModelState.IsValid && !string.IsNullOrEmpty(val))
 //             {
-//                 ctx.HttpContext!.Session.SetString(SessionVariables.userId, val);
+//                 ctx.HttpContext!.Session.SetString(Constants.userId, val);
 
-//                 logger.LogWarning($"login ctx user id: {ctx.HttpContext!.Session.GetString(SessionVariables.userId)}");
+//                 logger.LogWarning($"login ctx user id: {ctx.HttpContext!.Session.GetString(Constants.userId)}");
 
 //                 return RedirectToAction("Index", "Home");
 //             }
 
-//             TempData["incorrectLogin"] = "Incorrect username or password";
+//             TempData[Constants.INCORRECT_LOGIN] = "Incorrect username or password";
 
 //             return RedirectToAction(nameof(Login));
 //         }

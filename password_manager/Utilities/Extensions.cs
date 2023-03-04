@@ -12,10 +12,10 @@ public static class Extensions
         var passwordHasher = new PasswordHasher<ApplicationUser>();
 
         // Seed Roles
-        var adminRole = new IdentityRole(Roles.ADMIN);
+        var adminRole = new IdentityRole(Constants.ADMIN);
         adminRole.NormalizedName = adminRole.Name?.ToUpper();
 
-        var memberRole = new IdentityRole(Roles.REG);
+        var memberRole = new IdentityRole(Constants.USER);
         memberRole.NormalizedName = memberRole.Name?.ToUpper();
 
         List<IdentityRole> roles = new List<IdentityRole>
@@ -31,7 +31,7 @@ public static class Extensions
         {
             FirstName = "admin_first_name",
             LastName = "admin_last_name",
-            UserName = Roles.ADMIN,
+            UserName = Constants.ADMIN,
             Email = "boviner1990@gmail.com",
             EmailConfirmed = true,
         };
@@ -44,7 +44,7 @@ public static class Extensions
         {
             FirstName = "regular_user_first_name",
             LastName = "regular_user_last_name",
-            UserName = Roles.REG,
+            UserName = Constants.USER,
             Email = "dummyreceiver66@gmail.com",
             EmailConfirmed = true,
         };
@@ -64,7 +64,8 @@ public static class Extensions
         // Seed UserRoles
         List<IdentityUserRole<string>> userRoles = new List<IdentityUserRole<string>>();
 
-        users.ForEach(user => {
+        users.ForEach(user =>
+        {
             userRoles.Add(new IdentityUserRole<string>
             {
                 UserId = user.Id,

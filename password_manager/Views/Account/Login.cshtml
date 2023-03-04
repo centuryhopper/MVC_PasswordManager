@@ -10,12 +10,12 @@
 
 <h1 class="text-center">Log in</h1>
 
-@if (TempData["sessionExpired"] is not null)
+@if (TempData[Constants.SESSION_EXPIRED] is not null)
 {
-    <div class="alert alert-danger">@TempData["sessionExpired"]</div>
+    <div class="alert alert-danger">@TempData[Constants.SESSION_EXPIRED]</div>
 }
 
-<form id="contactForm" method="post" action="@Url.Action("ValidateLogin", "Account")">
+<form id="contactForm" method="post" action="@Url.Action("Login", "Account")">
     @Html.AntiForgeryToken()
 
     @* <div class="text-danger" asp-validation-summary="All"></div> *@
@@ -35,19 +35,20 @@
     </div>
 
     <input id="submitButton" type="submit" value="Log in" class="btn btn-primary" />
-    <div>
-        <a asp-action="ForgotPassword" asp-controller="Account">Forgot Password?</a>
-    </div>
+
 
 
     <div class="text-center">
         <p>Don't have an account? @Html.ActionLink("Sign up", "Register", "Account")</p>
+        <div>
+            <a asp-action="ForgotPassword" asp-controller="Account">Forgot Password?</a>
+        </div>
     </div>
 </form>
 
-@if (TempData["incorrectLogin"] is not null)
+@if (TempData[Constants.INCORRECT_LOGIN] is not null)
 {
-    <div class="alert alert-danger">@TempData["incorrectLogin"]</div>
+    <div class="alert alert-danger">@TempData[Constants.INCORRECT_LOGIN]</div>
 }
 
 @section Scripts {

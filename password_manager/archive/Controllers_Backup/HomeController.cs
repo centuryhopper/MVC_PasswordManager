@@ -29,14 +29,14 @@
 //         // currently the user id is passed in. We will filter the table in the database for all passwords associated with this account, if there are any.
 //         logger.LogWarning("entering home controller index page");
 
-//         logger.LogWarning($"home index ctx user id: {ctx.HttpContext!.Session.GetString(SessionVariables.userId)}");
+//         logger.LogWarning($"home index ctx user id: {ctx.HttpContext!.Session.GetString(Constants.userId)}");
 
 //         if (ctx.HttpContext!.User.Identity!.IsAuthenticated)
 //         {
 //             return View(new AccountModel());
 //         }
 
-//         TempData["sessionExpired"] = "The session has expired. Please Log in again.";
+//         TempData[Constants.SESSION_EXPIRED] = "The session has expired. Please Log in again.";
 
 //         return RedirectToAction("Login", "Account");
 //     }
@@ -46,13 +46,13 @@
 //     {
 //         try
 //         {
-//             await dataAccess.Post(model, ctx.HttpContext!.Session.GetString(SessionVariables.userId)!);
-//             TempData["addedAccount"] = "account has been successfully added";
+//             await dataAccess.Post(model, ctx.HttpContext!.Session.GetString(Constants.userId)!);
+//             TempData[Constants.ADDED_ACCOUNT] = "account has been successfully added";
 //         }
 //         catch (Exception e)
 //         {
 //             logger.LogError(e.Message);
-//             TempData["errorAddingAccount"] = "an error has occurred in adding an account";
+//             TempData[Constants.ERROR_ADD_ACCOUNT] = "an error has occurred in adding an account";
 //         }
 //         return RedirectToAction("Index", "Home");
 //     }
@@ -83,7 +83,7 @@
 //             return View(new EditViewModel {accountModel = model!, editIdx = idx});
 //         }
 
-//         TempData["sessionExpired"] = "The session has expired. Please Log in again.";
+//         TempData[Constants.SESSION_EXPIRED] = "The session has expired. Please Log in again.";
 
 //         return RedirectToAction("Login", "Account");
 //     }
@@ -104,7 +104,7 @@
 //         )
 //         {
 //             logger.LogWarning("all fields should not be empty");
-//             TempData["editError"] = "Please make sure you have entered all the proper fields when editing your password account.";
+//             TempData[Constants.ERROR_EDIT_ACCOUNT] = "Please make sure you have entered all the proper fields when editing your password account.";
 //             return RedirectToAction("Index", "Home");
 //         }
 
@@ -130,7 +130,7 @@
 //         )
 //         {
 //             logger.LogWarning("all fields should not be empty");
-//             TempData["editError"] = "Please make sure you have entered all the proper fields when editing your password account.";
+//             TempData[Constants.ERROR_EDIT_ACCOUNT] = "Please make sure you have entered all the proper fields when editing your password account.";
 //             return BadRequest();
 //         }
 
@@ -144,7 +144,7 @@
 //     {
 //         if (filterTerm is null)
 //             filterTerm = "";
-//         var userId = ctx.HttpContext!.Session.GetString(SessionVariables.userId)!;
+//         var userId = ctx.HttpContext!.Session.GetString(Constants.userId)!;
 //         var accountModels = await dataAccess.FilterBy(userId!, filterTerm) as List<AccountModel>;
 //         return PartialView("_AccountsListView", new AccountListViewModel { accountModels = accountModels!, filterTerm = filterTerm });
 //     }

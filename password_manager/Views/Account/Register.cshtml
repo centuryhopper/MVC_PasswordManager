@@ -20,7 +20,7 @@
     <div class="alert alert-danger">@TempData["userAlreadyExists"]</div>
 }
 
-<form id="contactFormRegister" method="post" action="@Url.Action("ValidateRegister", "Account")">
+<form id="contactFormRegister" method="post" action="@Url.Action("Register", "Account")">
     @Html.AntiForgeryToken()
 
      <div class="form-outline mb-4">

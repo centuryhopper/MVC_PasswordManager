@@ -3,13 +3,13 @@
 
 @{
     ViewData["Title"] = "Settings";
-    var userId = ctx.HttpContext!.Session.GetString(SessionVariables.userId);
+    var userId = ctx.HttpContext!.Session.GetString(Constants.userId);
 }
 
 <div class="text-center">
-    @if (userId is not null)
-    {
-        <div class="list-group">
+    <div class="list-group">
+        @if (userId is not null)
+        {
             <span id="delete_@userId">
                 <a
                     href="#"
@@ -25,8 +25,9 @@
                 <a class="list-group-item list-group-item-action text-danger my-4" href="@Url.Action("DeleteAccount", "Settings", new {})">Yes</a>
                 <a class="list-group-item list-group-item-action text-primary" href="#" onclick="confirmDelete('@userId', false)">No</a>
             </span>
-        </div>
-
-    }
+        }
+        <a class="btn btn-info" href="@Url.Action("ChangePassword", "Settings")">Change Password</a>
+        <a class="btn btn-info" href="@Url.Action("EditUserInfo", "Settings")">Edit Profile</a>
+    </div>
 </div>
 

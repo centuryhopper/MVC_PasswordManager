@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using PasswordManager.Models;
 
@@ -7,34 +8,44 @@ namespace PasswordManager.Utils;
 
 public static class TokenManager
 {
-    public static (string, DateTime, DateTime) createJwtToken(UserModel model, string tokenSecretKey)
+    public static (string, string, DateTime, DateTime) createJwtToken(ApplicationUser user, string tokenSecretKey)
     {
         var now = DateTime.Now;
-        var expires = now.AddDays(1);
+        var expires = now.AddSeconds(30);
         byte[] key = Convert.FromBase64String(tokenSecretKey);
         var securityKey = new SymmetricSecurityKey(key);
-
 
         var descriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(
                 new []
                 {
-                    new Claim(ClaimTypes.NameIdentifier, model.userId!),
-                    new Claim(ClaimTypes.Name, model.username!)
+                    new Claim(ClaimTypes.NameIdentifier, user.Id!),
+                    new Claim(ClaimTypes.Name, user.UserName!),
+                    new Claim(ClaimTypes.Email, user.Email!),
+                    new Claim(ClaimTypes.Expiration, expires.ToString()),
                 }
             ),
             Expires = expires,
+            NotBefore = now,
             SigningCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256Signature)
         };
 
         var handler = new JwtSecurityTokenHandler();
         JwtSecurityToken token = handler.CreateJwtSecurityToken(descriptor);
-        return (handler.WriteToken(token), now, expires);
+
+        #region refresh token
+        var randomNum =new byte[32];
+        using var randomNumberGenerator = RandomNumberGenerator.Create();
+        randomNumberGenerator.GetBytes(randomNum);
+        #endregion
+
+
+        return (handler.WriteToken(token), Convert.ToBase64String(randomNum), now, expires);
     }
 
     // get username from the token
-    public static string? ValidateToken(string token, string secret)
+    public static string? ValidateToken(string token, string secret, string type)
     {
         var principal = GetPrincipal(token, secret);
         if (principal is null)
@@ -54,8 +65,9 @@ public static class TokenManager
 
 
 
-        Claim userIdClaim = identity?.FindFirst(ClaimTypes.NameIdentifier)!;
-        return userIdClaim.Value;
+        Claim? userIdClaim = identity?.FindFirst(type);
+
+        return userIdClaim?.Value ?? "Unknown value";
     }
 
     public static ClaimsPrincipal? GetPrincipal(string token, string secret)
@@ -95,5 +107,8 @@ public static class TokenManager
             return null;
         }
     }
+
+
+
 }
 

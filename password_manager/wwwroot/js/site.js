@@ -39,5 +39,38 @@ var confirmDelete = (uniqueId, isDeleteClicked) => {
     }
 }
 
+var autosave = () =>
+{
+    // Get the form data
+    var formData = $('#edituserInfoForm').serializeArray();
+
+    // console.log(formData);
+
+    if (formData != null && formData != undefined && formData.length > 0)
+    {
+        let sendToServer = {
+            UserName: formData.find(o => o.name === 'UserName')['value'],
+            Email: formData.find(o => o.name === 'Email')['value'],
+            FirstName: formData.find(o => o.name === 'FirstName')['value'],
+            LastName: formData.find(o => o.name === 'LastName')['value'],
+            Role: formData.find(o => o.name === 'Role')['value']
+        }
+
+        // console.log(sendToServer)
+
+        // Send an AJAX request to the autosave action
+        $.ajax({
+            type: 'POST',
+            url: '/Settings/Autosave',
+            data: {autoSaveModel: JSON.stringify(sendToServer)},
+            success: function(result) {
+                console.log('Autosave successful');
+            },
+            error: function(xhr, status, error) {
+                console.log('Autosave failed: ' + error);
+            }
+        });
+    }
 
 
+}

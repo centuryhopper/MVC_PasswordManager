@@ -29,7 +29,7 @@
 //                 return View();
 //             }
 
-//             TempData["sessionExpired"] = "The session has expired. Please Log in again.";
+//             TempData[Constants.SESSION_EXPIRED] = "The session has expired. Please Log in again.";
 
 //             return RedirectToAction("Login", "Account");
 //         }
@@ -37,7 +37,7 @@
 //         public async Task<IActionResult> DeleteAccount()
 //         {
 //             // call delete account method from service
-//             await authService.Delete(ctx.HttpContext!.Session.GetString(SessionVariables.userId)!);
+//             await authService.Delete(ctx.HttpContext!.Session.GetString(Constants.userId)!);
 
 //             // redirect client to the login page
 //             return RedirectToAction("Index","Login");

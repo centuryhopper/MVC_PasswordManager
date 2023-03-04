@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using PasswordManager.Models;
 using PasswordManager.Utils;
+using Microsoft.AspNetCore.Authentication;
 
 namespace PasswordManager.Controllers;
 
@@ -28,8 +29,6 @@ public class AccountController : Controller
 
     public IActionResult Login()
     {
-        // logger.LogWarning("log in page");
-
         return View();
     }
 
@@ -66,10 +65,6 @@ public class AccountController : Controller
             // Build the password reset link
             var passwordResetLink = Url.Action("ResetPassword", "Account",
                     new { email = model.Email, token = token }, protocol: Request.Scheme);
-
-            // Log the password reset link
-            // TODO: instead of logging, actually send it to the user provided email
-            logger.Log(LogLevel.Warning, passwordResetLink);
 
             var emailBody = $"Dear {user.UserName}, please click the following link to reset your password: {passwordResetLink}";
 
@@ -152,7 +147,7 @@ public class AccountController : Controller
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ValidateLogin(LoginViewModel model, string? returnUrl = null)
+    public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
     {
         ViewData["ReturnUrl"] = returnUrl;
         if (ModelState.IsValid)
@@ -163,7 +158,7 @@ public class AccountController : Controller
                     (await userManager.CheckPasswordAsync(user, model.password)))
             {
                 ModelState.AddModelError(string.Empty, "Email not confirmed yet");
-                TempData["incorrectLogin"] = Helpers.GetErrors<AccountController>(ModelState);
+                TempData[Constants.INCORRECT_LOGIN] = Helpers.GetErrors<AccountController>(ModelState);
                 return View(model);
             }
 
@@ -171,27 +166,48 @@ public class AccountController : Controller
 
             if (user is not null && result.Succeeded)
             {
-                await signInManager.SignInAsync(user, isPersistent: false);
-                // var roles = await userManager.GetRolesAsync(user!);
-                // if (roles.Contains("Admin"))
-                // {
-                HttpContext.Session.SetString(SessionVariables.userId, user?.Id!);
+                HttpContext.Session.SetString(Constants.userId, user?.Id!);
+
+                var (token, refreshToken, dateCreated, expires) = TokenManager.createJwtToken(user!, configuration.GetSection("AppSettings:Token").Value!);
+
+                Response.Cookies.Append(Constants.X_ACCESS_TOKEN, token, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Strict });
+                Response.Cookies.Append(Constants.X_REFRESH_TOKEN, refreshToken, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Strict });
+                Response.Cookies.Append(Constants.X_USERNAME, user!.UserName!, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Strict });
+
                 return RedirectToAction(nameof(HomeController.Index), "Home");
-                // }
             }
             else
             {
                 ModelState.AddModelError(String.Empty, "Incorrect username or password.");
 
-                TempData["incorrectLogin"] = Helpers.GetErrors<AccountController>(ModelState);
+                TempData[Constants.INCORRECT_LOGIN] = Helpers.GetErrors<AccountController>(ModelState);
 
                 return RedirectToAction(nameof(Login));
             }
         }
 
-        TempData["incorrectLogin"] = "something failed, redisplaying login...";
-        // If we got this far, something failed, redisplay form
+        TempData[Constants.INCORRECT_LOGIN] = "something failed, redisplaying login...";
+
         return RedirectToAction(nameof(Login));
+    }
+
+    public async Task<IActionResult> LogOut()
+    {
+        logger.LogWarning("logging user out");
+
+        var userId = HttpContext.Session.GetString(Constants.userId)!;
+
+        var user = await userManager.FindByIdAsync(userId);
+
+        await signInManager.SignOutAsync();
+
+        Response.Cookies.Delete(Constants.X_ACCESS_TOKEN);
+        Response.Cookies.Delete(Constants.X_REFRESH_TOKEN);
+        Response.Cookies.Delete(Constants.X_USERNAME);
+
+        HttpContext.Session.Clear();
+
+        return RedirectToAction(nameof(AccountController.Login), "Account");
     }
 
     [AllowAnonymous]
@@ -199,14 +215,14 @@ public class AccountController : Controller
     {
         if (userId is null || token is null)
         {
-            TempData["incorrectLogin"] = "couldn't successfully confirm email";
+            TempData[Constants.INCORRECT_LOGIN] = "couldn't successfully confirm email";
             return RedirectToAction(nameof(Login));
         }
 
         var user = await userManager.FindByIdAsync(userId);
         if (user is null)
         {
-            return View("Error", new ErrorViewModel {ErrorMessage = $"The User ID {userId} is invalid"});
+            return View("Error", new ErrorViewModel { ErrorMessage = $"The User ID {userId} is invalid" });
         }
 
         var result = await userManager.ConfirmEmailAsync(user, token);
@@ -215,14 +231,14 @@ public class AccountController : Controller
             return View();
         }
 
-        return View("Error", new ErrorViewModel {ErrorMessage = "Email cannot be confirmed"});
+        return View("Error", new ErrorViewModel { ErrorMessage = "Email cannot be confirmed" });
 
     }
 
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
-    public async Task<ActionResult> ValidateRegister(RegisterViewModel model)
+    public async Task<ActionResult> Register(RegisterViewModel model)
     {
         logger.LogWarning($"registering {model}");
 
@@ -247,20 +263,20 @@ public class AccountController : Controller
                 var confirmationLink = Url.Action(nameof(AccountController.ConfirmEmail), "Account",
                     new { userId = user.Id, token = token }, Request.Scheme);
 
-                if (signInManager.IsSignedIn(User) && User.IsInRole(Roles.ADMIN))
+                if (signInManager.IsSignedIn(User) && User.IsInRole(Constants.ADMIN))
                 {
                     return RedirectToAction(nameof(ManageController.Index), "Manage");
                 }
 
                 // make sure the role exists
-                var roleExist = await roleManager.RoleExistsAsync(Roles.REG);
+                var roleExist = await roleManager.RoleExistsAsync(Constants.USER);
                 if (!roleExist)
                 {
-                    await roleManager.CreateAsync(new IdentityRole(Roles.REG));
+                    await roleManager.CreateAsync(new IdentityRole(Constants.USER));
                 }
 
                 // lets just assign everyone to admin role for now
-                await userManager.AddToRoleAsync(user, Roles.REG);
+                await userManager.AddToRoleAsync(user, Constants.USER);
 
                 var subject = "Password Manager Account Confirmation Link";
 
