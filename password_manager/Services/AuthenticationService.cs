@@ -4,11 +4,11 @@
 // using Microsoft.AspNetCore.Identity;
 // using Microsoft.EntityFrameworkCore;
 // using Microsoft.IdentityModel.Tokens;
-// using PasswordManager.Data;
-// using PasswordManager.Models;
-// using PasswordManager.Utils;
+// using password_manager.Data;
+// using password_manager.Models;
+// using password_manager.Utils;
 
-// namespace PasswordManager.Services;
+// namespace password_manager.Services;
 
 // public class AuthenticationService : IAuthenticationService<UserModel>
 // {

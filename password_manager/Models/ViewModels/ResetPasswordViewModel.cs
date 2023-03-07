@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-namespace PasswordManager.Models;
+namespace password_manager.Models;
 
 public class ResetPasswordViewModel
 {

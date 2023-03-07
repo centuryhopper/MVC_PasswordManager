@@ -1,9 +1,11 @@
 @inject IHttpContextAccessor ctx
-@using PasswordManager.Utils
+@inject UserManager<ApplicationUser> userManager
+@using password_manager.Utils
 
 @{
     ViewData["Title"] = "Settings";
     var userId = ctx.HttpContext!.Session.GetString(Constants.userId);
+    var user = await userManager.FindByIdAsync(userId!);
 }
 
 <div class="text-center">
@@ -28,6 +30,7 @@
         }
         <a class="btn btn-info" href="@Url.Action("ChangePassword", "Settings")">Change Password</a>
         <a class="btn btn-info" href="@Url.Action("EditUserInfo", "Settings")">Edit Profile</a>
+        <a class="btn btn-info" href="@Url.Action("ToggleTwoFactor", "Settings")">@(user!.TwoFactorEnabled ? "Two factor authentication is enabled. Click To disable." : "Two factor authentication is disabled. Click To enable.")</a>
     </div>
 </div>
 

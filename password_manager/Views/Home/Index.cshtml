@@ -1,7 +1,7 @@
 ﻿@inject IHttpContextAccessor ctx
 @inject UserManager<ApplicationUser> userManager
-@using PasswordManager.Models
-@using PasswordManager.Utils
+@using password_manager.Models
+@using password_manager.Utils
 @model AccountModel
 
 @{
@@ -13,15 +13,15 @@
     <h1 class="display-4">Passwords</h1>
     @if (user is not null && await userManager.IsInRoleAsync(user, "Admin"))
     {
-                    <ul style="list-style: none">
-                        <li>Admin ID:</li>
-                        <li>@ctx.HttpContext!.Session.GetString(Constants.userId)</li>
-                    </ul>
+                        <ul style="list-style: none">
+                            <li>Admin ID:</li>
+                            <li>@ctx.HttpContext!.Session.GetString(Constants.userId)</li>
+                        </ul>
     }
 
     @if (TempData[Constants.ERROR_EDIT_ACCOUNT] is not null)
     {
-                    <div class="alert alert-danger">@TempData[Constants.ERROR_EDIT_ACCOUNT]</div>
+                        <div class="alert alert-danger">@TempData[Constants.ERROR_EDIT_ACCOUNT]</div>
     }
 
     <section class="vh-100" style="background-color: "#eee";">
@@ -83,11 +83,11 @@
                             </div>
                             @if (TempData[Constants.ADDED_ACCOUNT] is not null)
                             {
-                                            <div class="alert alert-info">@TempData[Constants.ADDED_ACCOUNT]</div>
+                                                <div class="alert alert-info">@TempData[Constants.ADDED_ACCOUNT]</div>
                             }
                             else if (TempData[Constants.ERROR_ADD_ACCOUNT] is not null)
                             {
-                                            <div class="alert alert-danger">@TempData[Constants.ERROR_ADD_ACCOUNT]</div>
+                                                <div class="alert alert-danger">@TempData[Constants.ERROR_ADD_ACCOUNT]</div>
                             }
 
                             @* @await Component.InvokeAsync("EditDetails", new {accountId="aa9723f8-d1c5-42de-bfab-b24621c88963", idx=1}) *@
@@ -105,35 +105,35 @@
 
 @section Scripts
     {
-                <script>
-                    $(() => {
-                        getUsers()
-
-                        // responsive filtering from this code snippet
-                        $('#filterInput').on('keyup', () => {
+                    <script>
+                        $(() => {
                             getUsers()
-                        })
-                    })
 
-                    function submitForm() {
-                        // console.log('submitting');
-                        document.getElementById("editForm").submit();
-                    }
-                    var getUsers = () => {
-                        $.ajax({
-                            url: '@Url.Action("FilterAccounts", "Home")',
-                            datatype: 'html',
-                            method: 'GET',
-                            data: {filterTerm: $('#filterInput').val()},
-                            success: (res) => {
-                                // clear the html before outputting the res
-                                $('#accountListView').html('').html(res)
-                            },
-                            error: (err) => {
-                                console.log(err)
-                            }
+                            // responsive filtering from this code snippet
+                            $('#filterInput').on('keyup', () => {
+                                getUsers()
+                            })
                         })
-                    }
-                </script>
+
+                        function submitForm() {
+                            // console.log('submitting');
+                            document.getElementById("editForm").submit();
+                        }
+                        var getUsers = () => {
+                            $.ajax({
+                                url: '@Url.Action("FilterAccounts", "Home")',
+                                datatype: 'html',
+                                method: 'GET',
+                                data: {filterTerm: $('#filterInput').val()},
+                                success: (res) => {
+                                    // clear the html before outputting the res
+                                    $('#accountListView').html('').html(res)
+                                },
+                                error: (err) => {
+                                    console.log(err)
+                                }
+                            })
+                        }
+                    </script>
 }
 

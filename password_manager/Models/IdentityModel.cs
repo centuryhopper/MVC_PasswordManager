@@ -1,7 +1,6 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 
-namespace PasswordManager.Models;
+namespace password_manager.Models;
 
 public class ApplicationUser : IdentityUser
 {

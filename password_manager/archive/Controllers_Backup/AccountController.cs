@@ -6,9 +6,9 @@
 // using Microsoft.AspNetCore.Authentication;
 // using Microsoft.AspNetCore.Authentication.Cookies;
 // using Microsoft.AspNetCore.Mvc;
-// using PasswordManager.Models;
-// using PasswordManager.Services;
-// using PasswordManager.Utils;
+// using password_manager.Models;
+// using password_manager.Services;
+// using password_manager.Utils;
 
 // namespace password_manager.Controllers
 // {

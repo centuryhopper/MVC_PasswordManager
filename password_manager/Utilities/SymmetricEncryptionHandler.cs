@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace PasswordManager.Utils;
+namespace password_manager.Utils;
 
 public static class SymmetricEncryptionHandler
 {

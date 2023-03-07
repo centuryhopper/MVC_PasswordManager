@@ -1,5 +1,5 @@
 
-namespace PasswordManager.Models;
+namespace password_manager.Models;
 
 public class ManageUsersViewModel<T>
 {

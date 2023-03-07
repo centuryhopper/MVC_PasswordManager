@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using PasswordManager.Models;
+using password_manager.Models;
 
-namespace PasswordManager.Utils;
+namespace password_manager.Utils;
 
 public static class Extensions
 {
@@ -15,13 +15,21 @@ public static class Extensions
         var adminRole = new IdentityRole(Constants.ADMIN);
         adminRole.NormalizedName = adminRole.Name?.ToUpper();
 
-        var memberRole = new IdentityRole(Constants.USER);
-        memberRole.NormalizedName = memberRole.Name?.ToUpper();
+        var userRole = new IdentityRole(Constants.USER);
+        userRole.NormalizedName = userRole.Name?.ToUpper();
+
+        var auditorRole = new IdentityRole(Constants.AUDITOR);
+        auditorRole.NormalizedName = auditorRole.Name?.ToUpper();
+
+        var managerRole = new IdentityRole(Constants.MANAGER);
+        managerRole.NormalizedName = managerRole.Name?.ToUpper();
 
         List<IdentityRole> roles = new List<IdentityRole>
         {
             adminRole,
-            memberRole
+            userRole,
+            managerRole,
+            auditorRole,
         };
 
         builder.Entity<IdentityRole>().HasData(roles);

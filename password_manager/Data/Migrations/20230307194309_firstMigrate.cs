@@ -4,10 +4,12 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace passwordmanager.Migrations
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
+namespace passwordmanager.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class initialIdentityCreate : Migration
+    public partial class firstMigrate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -31,10 +33,8 @@ namespace passwordmanager.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
-                    userId = table.Column<string>(type: "text", nullable: true),
                     FirstName = table.Column<string>(type: "text", nullable: false),
                     LastName = table.Column<string>(type: "text", nullable: false),
-                    Password = table.Column<string>(type: "text", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -184,6 +184,35 @@ namespace passwordmanager.Migrations
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "AspNetRoles",
+                columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
+                values: new object[,]
+                {
+                    { "1077c273-2d4a-4cdc-ae28-933c2bf0c22e", null, "AUDITOR", "AUDITOR" },
+                    { "4e53bd6b-dfe0-49b3-8e08-0967bde2726b", null, "Admin", "ADMIN" },
+                    { "773f514d-11e0-41bc-bd48-4d9811f0cc2a", null, "MANAGER", "MANAGER" },
+                    { "e8d2216a-b421-41e3-b21d-b22a18221fd8", null, "Regular_User", "REGULAR_USER" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "AspNetUsers",
+                columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Email", "EmailConfirmed", "FirstName", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
+                values: new object[,]
+                {
+                    { "99bd74ef-9bb5-462b-956b-3d696020fc97", 0, "4aa8b194-c89d-454d-a020-6c1b2b42218b", "boviner1990@gmail.com", true, "admin_first_name", "admin_last_name", false, null, "BOVINER1990@GMAIL.COM", "ADMIN", "AQAAAAIAAYagAAAAEFECnUXoMtSdGCNhFhEOx8Tu6nPbqP98eeBwSOe83PtTYdMEdg6Y6Wx29gwVHBlcfQ==", null, false, "f5678e9f-217b-498c-b551-805e820818de", false, "Admin" },
+                    { "d1f8b61a-d151-4305-9560-44d0417e09aa", 0, "3f7cd171-27e8-461f-80f7-1cfceaab2344", "dummyreceiver66@gmail.com", true, "regular_user_first_name", "regular_user_last_name", false, null, "DUMMYRECEIVER66@GMAIL.COM", "REGULAR_USER", "AQAAAAIAAYagAAAAECW7j3k8YJSXu1ibZj6aVTerpZxZFn9CBRtbNZO+0RwwHwlbLIgeOrcU0waNIiVJGw==", null, false, "f544c11a-023e-4468-9a28-c72cd478ae2a", false, "Regular_User" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "AspNetUserRoles",
+                columns: new[] { "RoleId", "UserId" },
+                values: new object[,]
+                {
+                    { "4e53bd6b-dfe0-49b3-8e08-0967bde2726b", "99bd74ef-9bb5-462b-956b-3d696020fc97" },
+                    { "e8d2216a-b421-41e3-b21d-b22a18221fd8", "d1f8b61a-d151-4305-9560-44d0417e09aa" }
                 });
 
             migrationBuilder.CreateIndex(

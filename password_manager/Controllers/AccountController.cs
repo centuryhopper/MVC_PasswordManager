@@ -2,11 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
-using PasswordManager.Models;
-using PasswordManager.Utils;
+using password_manager.Models;
+using password_manager.Utils;
 using Microsoft.AspNetCore.Authentication;
 
-namespace PasswordManager.Controllers;
+namespace password_manager.Controllers;
 
 public class AccountController : Controller
 {
@@ -27,7 +27,7 @@ public class AccountController : Controller
         this.emailSender = emailSender;
     }
 
-    public IActionResult Login()
+    public IActionResult Login(string returnUrl)
     {
         return View();
     }
@@ -147,9 +147,8 @@ public class AccountController : Controller
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
+    public async Task<IActionResult> Login(LoginViewModel model)
     {
-        ViewData["ReturnUrl"] = returnUrl;
         if (ModelState.IsValid)
         {
             var user = await userManager.FindByNameAsync(model.username)!;
@@ -163,6 +162,18 @@ public class AccountController : Controller
             }
 
             var result = await signInManager.PasswordSignInAsync(model.username, model.password, isPersistent: false, lockoutOnFailure: false);
+
+            if (user is not null && result.RequiresTwoFactor)
+            {
+                HttpContext.Session.SetString(Constants.userId, user?.Id!);
+
+                var (token, refreshToken, dateCreated, expires) = TokenManager.createJwtToken(user!, configuration.GetSection("AppSettings:Token").Value!);
+
+                Response.Cookies.Append(Constants.X_ACCESS_TOKEN, token, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Strict });
+                Response.Cookies.Append(Constants.X_REFRESH_TOKEN, refreshToken, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Strict });
+                Response.Cookies.Append(Constants.X_USERNAME, user!.UserName!, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Strict });
+                return RedirectToAction(nameof(SettingsController.LoginTwoStep), "Settings", new { email=user.Email,});
+            }
 
             if (user is not null && result.Succeeded)
             {
@@ -187,6 +198,8 @@ public class AccountController : Controller
         }
 
         TempData[Constants.INCORRECT_LOGIN] = "something failed, redisplaying login...";
+        TempData[Constants.INCORRECT_LOGIN] = Helpers.GetErrors<AccountController>(ModelState);
+
 
         return RedirectToAction(nameof(Login));
     }

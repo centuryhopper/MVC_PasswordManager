@@ -1,5 +1,5 @@
 
-namespace PasswordManager.Utils;
+namespace password_manager.Utils;
 
 public static partial class Constants
 {

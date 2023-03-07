@@ -5,15 +5,15 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using PasswordManager.Data;
+using password_manager.Data;
 
 #nullable disable
 
-namespace passwordmanager.Migrations
+namespace passwordmanager.Data.Migrations
 {
     [DbContext(typeof(PasswordDbContext))]
-    [Migration("20230227205849_initialIdentityCreate2")]
-    partial class initialIdentityCreate2
+    [Migration("20230307194309_firstMigrate")]
+    partial class firstMigrate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -49,6 +49,32 @@ namespace passwordmanager.Migrations
                         .HasDatabaseName("RoleNameIndex");
 
                     b.ToTable("AspNetRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "4e53bd6b-dfe0-49b3-8e08-0967bde2726b",
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = "e8d2216a-b421-41e3-b21d-b22a18221fd8",
+                            Name = "Regular_User",
+                            NormalizedName = "REGULAR_USER"
+                        },
+                        new
+                        {
+                            Id = "773f514d-11e0-41bc-bd48-4d9811f0cc2a",
+                            Name = "MANAGER",
+                            NormalizedName = "MANAGER"
+                        },
+                        new
+                        {
+                            Id = "1077c273-2d4a-4cdc-ae28-933c2bf0c22e",
+                            Name = "AUDITOR",
+                            NormalizedName = "AUDITOR"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -136,6 +162,18 @@ namespace passwordmanager.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = "99bd74ef-9bb5-462b-956b-3d696020fc97",
+                            RoleId = "4e53bd6b-dfe0-49b3-8e08-0967bde2726b"
+                        },
+                        new
+                        {
+                            UserId = "d1f8b61a-d151-4305-9560-44d0417e09aa",
+                            RoleId = "e8d2216a-b421-41e3-b21d-b22a18221fd8"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -157,13 +195,9 @@ namespace passwordmanager.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("PasswordManager.Models.AccountModel", b =>
+            modelBuilder.Entity("password_manager.Models.AccountModel", b =>
                 {
                     b.Property<string>("accountId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Id")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("aesIV")
@@ -199,12 +233,12 @@ namespace passwordmanager.Migrations
 
                     b.HasKey("accountId");
 
-                    b.HasIndex("Id");
+                    b.HasIndex("userId");
 
                     b.ToTable("PasswordTableEF");
                 });
 
-            modelBuilder.Entity("PasswordManager.Models.ApplicationUser", b =>
+            modelBuilder.Entity("password_manager.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
@@ -245,10 +279,6 @@ namespace passwordmanager.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<string>("Password")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 
@@ -278,6 +308,44 @@ namespace passwordmanager.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "99bd74ef-9bb5-462b-956b-3d696020fc97",
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "4aa8b194-c89d-454d-a020-6c1b2b42218b",
+                            Email = "boviner1990@gmail.com",
+                            EmailConfirmed = true,
+                            FirstName = "admin_first_name",
+                            LastName = "admin_last_name",
+                            LockoutEnabled = false,
+                            NormalizedEmail = "BOVINER1990@GMAIL.COM",
+                            NormalizedUserName = "ADMIN",
+                            PasswordHash = "AQAAAAIAAYagAAAAEFECnUXoMtSdGCNhFhEOx8Tu6nPbqP98eeBwSOe83PtTYdMEdg6Y6Wx29gwVHBlcfQ==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "f5678e9f-217b-498c-b551-805e820818de",
+                            TwoFactorEnabled = false,
+                            UserName = "Admin"
+                        },
+                        new
+                        {
+                            Id = "d1f8b61a-d151-4305-9560-44d0417e09aa",
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "3f7cd171-27e8-461f-80f7-1cfceaab2344",
+                            Email = "dummyreceiver66@gmail.com",
+                            EmailConfirmed = true,
+                            FirstName = "regular_user_first_name",
+                            LastName = "regular_user_last_name",
+                            LockoutEnabled = false,
+                            NormalizedEmail = "DUMMYRECEIVER66@GMAIL.COM",
+                            NormalizedUserName = "REGULAR_USER",
+                            PasswordHash = "AQAAAAIAAYagAAAAECW7j3k8YJSXu1ibZj6aVTerpZxZFn9CBRtbNZO+0RwwHwlbLIgeOrcU0waNIiVJGw==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "f544c11a-023e-4468-9a28-c72cd478ae2a",
+                            TwoFactorEnabled = false,
+                            UserName = "Regular_User"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -291,7 +359,7 @@ namespace passwordmanager.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("PasswordManager.Models.ApplicationUser", null)
+                    b.HasOne("password_manager.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -300,7 +368,7 @@ namespace passwordmanager.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("PasswordManager.Models.ApplicationUser", null)
+                    b.HasOne("password_manager.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -315,7 +383,7 @@ namespace passwordmanager.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PasswordManager.Models.ApplicationUser", null)
+                    b.HasOne("password_manager.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -324,25 +392,25 @@ namespace passwordmanager.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("PasswordManager.Models.ApplicationUser", null)
+                    b.HasOne("password_manager.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("PasswordManager.Models.AccountModel", b =>
+            modelBuilder.Entity("password_manager.Models.AccountModel", b =>
                 {
-                    b.HasOne("PasswordManager.Models.ApplicationUser", "user")
+                    b.HasOne("password_manager.Models.ApplicationUser", "user")
                         .WithMany("accounts")
-                        .HasForeignKey("Id")
+                        .HasForeignKey("userId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("user");
                 });
 
-            modelBuilder.Entity("PasswordManager.Models.ApplicationUser", b =>
+            modelBuilder.Entity("password_manager.Models.ApplicationUser", b =>
                 {
                     b.Navigation("accounts");
                 });

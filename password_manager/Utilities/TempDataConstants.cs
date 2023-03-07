@@ -1,4 +1,4 @@
-namespace PasswordManager.Utils;
+namespace password_manager.Utils;
 
 public static partial class Constants
 {
@@ -10,5 +10,6 @@ public static partial class Constants
     public const string ERROR_EDIT_USER = "editUserError";
     public const string EDIT_USER = "editUser";
     public const string SESSION_EXPIRED = "sessionExpired";
+    public const string VERIFICATION_ERROR = "verificationError";
 }
 

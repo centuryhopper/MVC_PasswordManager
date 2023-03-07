@@ -1,4 +1,4 @@
-namespace PasswordManager.Services;
+namespace password_manager.Services;
 
 public interface IDataAccess<T>
 {

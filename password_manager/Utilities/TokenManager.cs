@@ -2,9 +2,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
-using PasswordManager.Models;
+using password_manager.Models;
 
-namespace PasswordManager.Utils;
+namespace password_manager.Utils;
 
 public static class TokenManager
 {
@@ -18,7 +18,7 @@ public static class TokenManager
         var descriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(
-                new []
+                new[]
                 {
                     new Claim(ClaimTypes.NameIdentifier, user.Id!),
                     new Claim(ClaimTypes.Name, user.UserName!),
@@ -35,7 +35,7 @@ public static class TokenManager
         JwtSecurityToken token = handler.CreateJwtSecurityToken(descriptor);
 
         #region refresh token
-        var randomNum =new byte[32];
+        var randomNum = new byte[32];
         using var randomNumberGenerator = RandomNumberGenerator.Create();
         randomNumberGenerator.GetBytes(randomNum);
         #endregion
@@ -56,7 +56,7 @@ public static class TokenManager
         ClaimsIdentity? identity = null;
         try
         {
-            identity = (ClaimsIdentity?) principal.Identity;
+            identity = (ClaimsIdentity?)principal.Identity;
         }
         catch
         {
@@ -83,7 +83,7 @@ public static class TokenManager
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            JwtSecurityToken jwtToken = (JwtSecurityToken) tokenHandler.ReadToken(token);
+            JwtSecurityToken jwtToken = (JwtSecurityToken)tokenHandler.ReadToken(token);
             if (jwtToken is null)
             {
                 return null;

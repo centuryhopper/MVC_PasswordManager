@@ -3,14 +3,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using PasswordManager.Data;
-using PasswordManager.Models;
-using PasswordManager.Services;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using System.Net;
-using Microsoft.AspNetCore.Authorization;
+using password_manager.Data;
+using password_manager.Models;
+using password_manager.Services;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using PasswordManager.Utils;
+using password_manager.Utils;
 
 /*
 TODO: clean up and document code
@@ -87,7 +84,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8
                 .GetBytes(secretKey)),
     };
-    options.Events.OnMessageReceived = (context) => {
+    options.Events.OnMessageReceived = (context) =>
+    {
 
         if (context.Request.Cookies.ContainsKey(Constants.X_ACCESS_TOKEN))
         {
@@ -182,14 +180,6 @@ app.UseAuthorization();
 // default in asp.net core is /Account/AccessDenied
 app.UseStatusCodePagesWithRedirects("/Home/AccessDenied?code={0}");
 
-// app.Map("/AccessDenied", builder =>
-// {
-//     builder.Run(async context =>
-//     {
-//         context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
-//         await context.Response.WriteAsync("Access Denied :/");
-//     });
-// });
 
 app.UseCookiePolicy();
 

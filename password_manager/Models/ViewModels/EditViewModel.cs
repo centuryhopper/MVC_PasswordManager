@@ -1,4 +1,4 @@
-namespace PasswordManager.Models;
+namespace password_manager.Models;
 
 public class EditViewModel
 {

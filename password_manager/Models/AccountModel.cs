@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PasswordManager.Models;
+namespace password_manager.Models;
 
 public class AccountModel
 {
@@ -11,16 +11,16 @@ public class AccountModel
 
     // each account will be associated with only one user
     [Required, ForeignKey("ApplicationUser")]
-    public string? userId {get; set;}
-    public ApplicationUser user {get; set;} = null!;
+    public string? userId { get; set; }
+    public ApplicationUser user { get; set; } = null!;
 
-    [Required(ErrorMessage="Title is required"), StringLength(32), Display(Name="Title: ")]
+    [Required(ErrorMessage = "Title is required"), StringLength(32), Display(Name = "Title: ")]
     public string? title { get; set; }
 
-    [Required(ErrorMessage="Username is required"), StringLength(32), Display(Name="Username: ")]
+    [Required(ErrorMessage = "Username is required"), StringLength(32), Display(Name = "Username: ")]
     public string? username { get; set; }
 
-    [Required(ErrorMessage="Password is required"), StringLength(512), Display(Name="Password: ")]
+    [Required(ErrorMessage = "Password is required"), StringLength(512), Display(Name = "Password: ")]
     public string? password { get; set; }
     public string? aesKey { get; set; }
     public string? aesIV { get; set; }

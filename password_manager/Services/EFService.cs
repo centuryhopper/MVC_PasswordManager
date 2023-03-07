@@ -1,14 +1,11 @@
 using System.Security.Cryptography;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using PasswordManager.Data;
-using PasswordManager.Models;
-using PasswordManager.Utils;
+using password_manager.Data;
+using password_manager.Models;
+using password_manager.Utils;
 
-namespace PasswordManager.Services;
+namespace password_manager.Services;
 
 public class EFService : IDataAccess<AccountModel>
 {
@@ -294,7 +291,7 @@ public class EFService : IDataAccess<AccountModel>
 
             return model;
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             logger.LogError(e.Message);
             return null!;

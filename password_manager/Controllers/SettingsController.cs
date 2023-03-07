@@ -1,10 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using PasswordManager.Models;
-using PasswordManager.Utils;
+using password_manager.Models;
+using password_manager.Utils;
 
-namespace PasswordManager.Controllers
+namespace password_manager.Controllers
 {
     public class SettingsController : Controller
     {
@@ -12,17 +14,24 @@ namespace PasswordManager.Controllers
         private readonly UserManager<ApplicationUser> userManager;
         private readonly SignInManager<ApplicationUser> signInManager;
         private readonly RoleManager<IdentityRole> roleManager;
+        private readonly IEmailSender emailSender;
 
-        public SettingsController(ILogger<SettingsController> logger, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<IdentityRole> roleManager)
+        public SettingsController(ILogger<SettingsController> logger, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<IdentityRole> roleManager, IEmailSender emailSender)
         {
             this.logger = logger;
             this.userManager = userManager;
             this.signInManager = signInManager;
             this.roleManager = roleManager;
+            this.emailSender = emailSender;
         }
 
-        public IActionResult Index()
+        [Authorize(Roles=$"{Constants.ADMIN},{Constants.USER},{Constants.AUDITOR},{Constants.MANAGER}")]
+        public IActionResult Index(string returnUrl)
         {
+            if (!signInManager.IsSignedIn(User))
+            {
+                return RedirectToAction(nameof(AccountController.Login), "Account", new {returnUrl = returnUrl});
+            }
             return View();
         }
 
@@ -37,6 +46,8 @@ namespace PasswordManager.Controllers
                 TempData["DeleteAccountError"] = "Error on deleting your own account";
                 return RedirectToAction(nameof(Index));
             }
+
+            // TODO: Check password before allowing delete
 
             var result = await userManager.DeleteAsync(user);
 
@@ -169,5 +180,57 @@ namespace PasswordManager.Controllers
 
             return Ok();
         }
+
+        public async Task<IActionResult> ToggleTwoFactor()
+        {
+            var user = await userManager.FindByIdAsync(HttpContext.Session.GetString(Constants.userId)!);
+            user!.TwoFactorEnabled = !user.TwoFactorEnabled;
+
+            var result = await userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [AllowAnonymous]
+        public async Task<IActionResult> LoginTwoStep(string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+
+            var token = await userManager.GenerateTwoFactorTokenAsync(user!, "Email");
+
+            var subject = "Password Manager Login Verification Code";
+            var emailBody = $"code: {token}";
+
+            await Helpers.SendEmail<SettingsController>(emailSender, email, subject, emailBody, logger);
+
+            return View();
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<IActionResult> LoginTwoStep(TwoFactor twoFactor)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View("Error", new ErrorViewModel {ErrorTitle="error", ErrorMessage="incorrect verification code"});
+            }
+
+            var result = await signInManager.TwoFactorSignInAsync("Email", twoFactor.TwoFactorCode, false, false);
+            if (result.Succeeded)
+            {
+                return RedirectToAction(nameof(HomeController.Index), "Home");
+            }
+            else
+            {
+                ModelState.AddModelError("", "Incorrect Code");
+                // TempData[Constants.VERIFICATION_ERROR] = Helpers.GetErrors<SettingsController>(ModelState, logger);
+                return View();
+            }
+        }
+
     }
 }

@@ -1,17 +1,16 @@
 ﻿using System.Diagnostics;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using PasswordManager.Models;
-using PasswordManager.Services;
-using PasswordManager.Utils;
+using password_manager.Models;
+using password_manager.Services;
+using password_manager.Utils;
 using System.Text;
 
-namespace PasswordManager.Controllers;
+namespace password_manager.Controllers;
 
 // currently using jwt token based authentication
 public class HomeController : Controller
@@ -19,13 +18,15 @@ public class HomeController : Controller
     private readonly ILogger<HomeController> logger;
     private readonly IDataAccess<AccountModel> dataAccess;
     private readonly UserManager<ApplicationUser> userManager;
+    private readonly SignInManager<ApplicationUser> signInManager;
     private readonly IConfiguration configuration;
 
-    public HomeController(ILogger<HomeController> logger, IDataAccess<AccountModel> dataAccess, UserManager<ApplicationUser> userManager, IConfiguration configuration)
+    public HomeController(ILogger<HomeController> logger, IDataAccess<AccountModel> dataAccess, UserManager<ApplicationUser> userManager,SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
     {
         this.logger = logger;
         this.dataAccess = dataAccess;
         this.userManager = userManager;
+        this.signInManager = signInManager;
         this.configuration = configuration;
     }
 
@@ -73,8 +74,13 @@ public class HomeController : Controller
         return View();
     }
 
-    public async Task<IActionResult> Index()
+    [Authorize(Roles=$"{Constants.ADMIN},{Constants.USER},{Constants.AUDITOR},{Constants.MANAGER}")]
+    public async Task<IActionResult> Index(string returnUrl)
     {
+        if (!signInManager.IsSignedIn(User))
+        {
+            return RedirectToAction(nameof(AccountController.Login), "Account", new {returnUrl = returnUrl});
+        }
         // var cookieSize = Encoding.UTF8.GetByteCount("hTy%2BC4dZSUKhUCCANpRm5rmUimoDbXGz9rjRVTJqT0E%3D");
 
         await Refresh();

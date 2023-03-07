@@ -1,6 +1,6 @@
-using PasswordManager.Models;
+using password_manager.Models;
 
-namespace PasswordManager.Services;
+namespace password_manager.Services;
 
 public interface IAuthenticationService<T>
 {

@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using PasswordManager.Models;
-using PasswordManager.Utils;
+using password_manager.Models;
+using password_manager.Utils;
 
-namespace PasswordManager.Data;
+namespace password_manager.Data;
 
 public class PasswordDbContext : IdentityDbContext<ApplicationUser>
 {
