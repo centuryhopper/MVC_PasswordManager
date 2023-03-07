@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using password_manager.Models;
+namespace password_manager.Models;
 
 public class TwoFactor
 {

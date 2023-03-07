@@ -2,6 +2,8 @@
 @inject UserManager<ApplicationUser> userManager
 @using password_manager.Utils
 
+@model ConfirmDeleteViewModel
+
 @{
     ViewData["Title"] = "Settings";
     var userId = ctx.HttpContext!.Session.GetString(Constants.userId);
@@ -24,7 +26,11 @@
 
             <span id="confirmDelete_@userId" style="display:none">
                 <span>Are you sure you want to delete your account? All your passwords will be lost and cannot be recovered!</span>
-                <a class="list-group-item list-group-item-action text-danger my-4" href="@Url.Action("DeleteAccount", "Settings", new {})">Yes</a>
+                <form method="post" asp-action="DeleteAccount">
+                    <input type="password" asp-for="ConfirmPassword" placeholder="confirm password">
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                    <button class="list-group-item list-group-item-action text-danger my-4" type="submit">Yes</button>
+                </form>
                 <a class="list-group-item list-group-item-action text-primary" href="#" onclick="confirmDelete('@userId', false)">No</a>
             </span>
         }
@@ -34,3 +40,6 @@
     </div>
 </div>
 
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

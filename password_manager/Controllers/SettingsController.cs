@@ -35,7 +35,7 @@ namespace password_manager.Controllers
             return View();
         }
 
-        public async Task<IActionResult> DeleteAccount()
+        public async Task<IActionResult> DeleteAccount(ConfirmDeleteViewModel model)
         {
             var userId = HttpContext.Session.GetString(Constants.userId)!;
 
@@ -48,19 +48,28 @@ namespace password_manager.Controllers
             }
 
             // TODO: Check password before allowing delete
-
-            var result = await userManager.DeleteAsync(user);
-
-            if (result.Succeeded)
+            if (await userManager.CheckPasswordAsync(user, model.ConfirmPassword))
             {
-                // redirect client to the login page
-                return RedirectToAction(nameof(AccountController.Login), "Account");
+                logger.LogWarning("Password is correct");
             }
 
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError("", error.Description);
-            }
+            TempData[Constants.ACCOUNT_DELETION_CONFIRMATION] = "Your account has been deleted.";
+
+
+            return RedirectToAction(nameof(AccountController.Login), "Account");
+
+            // var result = await userManager.DeleteAsync(user);
+
+            // if (result.Succeeded)
+            // {
+            //     // redirect client to the login page
+            //     return RedirectToAction(nameof(AccountController.Login), "Account");
+            // }
+
+            // foreach (var error in result.Errors)
+            // {
+            //     ModelState.AddModelError("", error.Description);
+            // }
 
             TempData["DeleteAccountError"] = Helpers.GetErrors<SettingsController>(ModelState, logger);
 
