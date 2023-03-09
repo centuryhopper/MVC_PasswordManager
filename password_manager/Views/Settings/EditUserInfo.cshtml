@@ -6,7 +6,8 @@
 @{
     var autoSaveSeconds = 5;
     var getRoles = from role in roleManager.Roles where role.Name != Constants.ADMIN select role;
-    var roles = getRoles.ToList();
+    var roles = new List<IdentityRole> {new IdentityRole("")};
+    roles.AddRange(getRoles);
     var user = await userManager.FindByIdAsync(ctx.HttpContext!.Session.GetString(Constants.userId)!);
 }
 
@@ -41,6 +42,7 @@
         <div class="form-group">
             @Html.LabelFor(m => m.Role, "Select a role:")
             @Html.DropDownListFor(m => m.Role, new SelectList(roles))
+            <span asp-validation-for="Role" class="text-danger"></span>
         </div>
     </form>
     @if (TempData[Constants.EDIT_USER] is not null)

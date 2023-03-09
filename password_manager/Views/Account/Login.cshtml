@@ -18,6 +18,10 @@
 {
     <div class="alert alert-success">@TempData[Constants.ACCOUNT_DELETION_CONFIRMATION]</div>
 }
+@if (TempData[Constants.DELETE_ERROR] is not null)
+{
+    <div class="alert alert-danger">@TempData[Constants.DELETE_ERROR]</div>
+}
 
 <form id="contactForm" method="post" action="@Url.Action("Login", "Account")">
     @Html.AntiForgeryToken()

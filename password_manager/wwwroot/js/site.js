@@ -63,11 +63,11 @@ var autosave = () =>
             type: 'POST',
             url: '/Settings/Autosave',
             data: {autoSaveModel: JSON.stringify(sendToServer)},
-            success: function(result) {
-                console.log('Autosave successful');
+            success: function(result, status, xhr) {
+                console.log(`Autosave successful with status code: ${xhr.status}`);
             },
             error: function(xhr, status, error) {
-                console.log('Autosave failed: ' + error);
+                console.log('Autosave failed: ' + error + `status code: ${xhr.status}`);
             }
         });
     }

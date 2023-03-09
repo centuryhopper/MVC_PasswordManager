@@ -12,5 +12,6 @@ public static partial class Constants
     public const string SESSION_EXPIRED = "sessionExpired";
     public const string VERIFICATION_ERROR = "verificationError";
     public const string ACCOUNT_DELETION_CONFIRMATION = "ACCOUNT_DELETION_CONFIRMATION";
+    public const string DELETE_ERROR = "DELETE_ERROR";
 }
 

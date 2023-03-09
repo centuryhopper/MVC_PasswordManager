@@ -12,7 +12,6 @@ using password_manager.Utils;
 /*
 TODO: clean up and document code
 TODO: fix up the ui
-TODO: reset account lockout time when account is locked out
 TODO: add unit tests for password encrypt/decrypt methods
 
 

@@ -110,7 +110,10 @@ public class AccountController : Controller
                 var result = await userManager.ResetPasswordAsync(user, model.Token, model.Password);
                 if (result.Succeeded)
                 {
-                    logger.LogWarning("Successfully reset password");
+                    if (await userManager.IsLockedOutAsync(user))
+                    {
+                        await userManager.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow);
+                    }
                     return View("ResetPasswordConfirmation");
                 }
                 // Display validation errors. For example, password reset token already
@@ -151,9 +154,14 @@ public class AccountController : Controller
     {
         if (ModelState.IsValid)
         {
-            var user = await userManager.FindByNameAsync(model.username)!;
+            var user = await userManager.FindByNameAsync(model.username);
 
-            if (user != null && !user.EmailConfirmed &&
+            if (user is null)
+            {
+                return View("Error", new ErrorViewModel {ErrorTitle="Non-Existent", ErrorMessage="Cannot find your account"});
+            }
+
+            if (!user.EmailConfirmed &&
                     (await userManager.CheckPasswordAsync(user, model.password)))
             {
                 ModelState.AddModelError(string.Empty, "Email not confirmed yet");
@@ -163,19 +171,12 @@ public class AccountController : Controller
 
             var result = await signInManager.PasswordSignInAsync(model.username, model.password, isPersistent: false, lockoutOnFailure: false);
 
-            if (user is not null && result.RequiresTwoFactor)
+            if (result.IsLockedOut)
             {
-                HttpContext.Session.SetString(Constants.userId, user?.Id!);
-
-                var (token, refreshToken, dateCreated, expires) = TokenManager.createJwtToken(user!, configuration.GetSection("AppSettings:Token").Value!);
-
-                Response.Cookies.Append(Constants.X_ACCESS_TOKEN, token, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Strict });
-                Response.Cookies.Append(Constants.X_REFRESH_TOKEN, refreshToken, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Strict });
-                Response.Cookies.Append(Constants.X_USERNAME, user!.UserName!, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Strict });
-                return RedirectToAction(nameof(SettingsController.LoginTwoStep), "Settings", new { email=user.Email,});
+                return View("AccountLockedOut");
             }
 
-            if (user is not null && result.Succeeded)
+            if (result.Succeeded)
             {
                 HttpContext.Session.SetString(Constants.userId, user?.Id!);
 
@@ -184,17 +185,20 @@ public class AccountController : Controller
                 Response.Cookies.Append(Constants.X_ACCESS_TOKEN, token, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Strict });
                 Response.Cookies.Append(Constants.X_REFRESH_TOKEN, refreshToken, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Strict });
                 Response.Cookies.Append(Constants.X_USERNAME, user!.UserName!, new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Strict });
+
+                if (result.RequiresTwoFactor)
+                {
+                    return RedirectToAction(nameof(SettingsController.LoginTwoStep), "Settings", new { email=user.Email,});
+                }
 
                 return RedirectToAction(nameof(HomeController.Index), "Home");
             }
-            else
-            {
-                ModelState.AddModelError(String.Empty, "Incorrect username or password.");
 
-                TempData[Constants.INCORRECT_LOGIN] = Helpers.GetErrors<AccountController>(ModelState);
+            ModelState.AddModelError(String.Empty, "Incorrect username or password.");
 
-                return RedirectToAction(nameof(Login));
-            }
+            TempData[Constants.INCORRECT_LOGIN] = Helpers.GetErrors<AccountController>(ModelState);
+
+            return RedirectToAction(nameof(Login));
         }
 
         TempData[Constants.INCORRECT_LOGIN] = "something failed, redisplaying login...";

@@ -41,38 +41,37 @@ namespace password_manager.Controllers
 
             var user = await userManager.FindByIdAsync(userId);
 
+            var errors = new List<string>{};
+
             if (user is null)
             {
                 TempData["DeleteAccountError"] = "Error on deleting your own account";
                 return RedirectToAction(nameof(Index));
             }
 
-            // TODO: Check password before allowing delete
             if (await userManager.CheckPasswordAsync(user, model.ConfirmPassword))
             {
                 logger.LogWarning("Password is correct");
+                var result = await userManager.DeleteAsync(user);
+
+                if (result.Succeeded)
+                {
+                    // redirect client to the login page
+                    TempData[Constants.ACCOUNT_DELETION_CONFIRMATION] = "Your account has been deleted.";
+                    return RedirectToAction(nameof(AccountController.Login), "Account");
+                }
+
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError("", error.Description);
+                }
+
             }
 
-            TempData[Constants.ACCOUNT_DELETION_CONFIRMATION] = "Your account has been deleted.";
+            ModelState.AddModelError("", "Incorrect Password!");
+            errors.Add(Helpers.GetErrors<SettingsController>(ModelState, logger));
 
-
-            return RedirectToAction(nameof(AccountController.Login), "Account");
-
-            // var result = await userManager.DeleteAsync(user);
-
-            // if (result.Succeeded)
-            // {
-            //     // redirect client to the login page
-            //     return RedirectToAction(nameof(AccountController.Login), "Account");
-            // }
-
-            // foreach (var error in result.Errors)
-            // {
-            //     ModelState.AddModelError("", error.Description);
-            // }
-
-            TempData["DeleteAccountError"] = Helpers.GetErrors<SettingsController>(ModelState, logger);
-
+            TempData[Constants.DELETE_ERROR] = string.Join(", ", errors);
 
             return RedirectToAction(nameof(AccountController.Login), "Account");
         }
@@ -146,8 +145,8 @@ namespace password_manager.Controllers
             )
             {
                 logger.LogWarning("all fields should not be empty");
-                TempData[Constants.ERROR_EDIT_USER] = "Please make sure you have entered all the proper fields when editing your password account.";
-                return BadRequest();
+                // TempData[Constants.ERROR_EDIT_USER] = "Please make sure you have entered all the proper fields when editing your password account.";
+                return BadRequest(ModelState);
             }
 
             var user = await userManager.FindByIdAsync(HttpContext.Session.GetString(Constants.userId)!);
@@ -185,7 +184,7 @@ namespace password_manager.Controllers
                 return BadRequest(result.Errors);
             }
 
-            TempData[Constants.EDIT_USER] = "Save successful";
+            // TempData[Constants.EDIT_USER] = "Save successful";
 
             return Ok();
         }
