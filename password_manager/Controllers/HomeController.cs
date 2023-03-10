@@ -203,7 +203,7 @@ public class HomeController : Controller
 
     // get by default so the header really isn't needed but shown for clarity
     [HttpGet]
-    public async Task<PartialViewResult> FilterAccounts(string filterTerm)
+    public async Task<PartialViewResult> _AccountsListView(string filterTerm)
     {
         if (filterTerm is null)
             filterTerm = "";

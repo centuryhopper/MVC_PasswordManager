@@ -15,9 +15,9 @@
                 <p>@user.UserName</p>
                 <p>@user.Email</p>
                 <div>user roles: </div>
-                @foreach (var role in Model.Roles[idx])
+                @foreach (var (role, roleIdx) in Model.Roles[idx].Select((role, roleIdx) => (role, roleIdx)))
                 {
-                    <span> @role,</span>
+                    <span> @(role + (roleIdx < (Model.Roles[idx].Count()-1) ? "," : ""))</span>
                 }
             </div>
         }

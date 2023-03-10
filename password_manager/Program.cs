@@ -12,9 +12,6 @@ using password_manager.Utils;
 /*
 TODO: clean up and document code
 TODO: fix up the ui
-TODO: add unit tests for password encrypt/decrypt methods
-
-
 */
 
 
@@ -111,13 +108,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 // });
 #endregion
 
-// builder.Services.AddAuthorization(options =>
-// {
-//     options.FallbackPolicy = new AuthorizationPolicyBuilder()
-//         .RequireAuthenticatedUser()
-//         .Build();
-// });
-
 // identity framework setup
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -139,12 +129,6 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 }).AddEntityFrameworkStores<PasswordDbContext>().AddDefaultTokenProviders();
 
-// builder.Services.AddAuthentication(options =>
-// {
-//     options.DefaultScheme = IdentityConstants.ApplicationScheme;
-//     options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-// })
-// .AddIdentityCookies();
 
 // link to postgreSQL db for entity framework
 builder.Services.AddDbContextPool<PasswordDbContext>(
@@ -189,6 +173,7 @@ app.UseCookiePolicy();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}");
+    pattern: "{controller=Account}/{action=Login}/{id?}"
+);
 
 app.Run();

@@ -90,8 +90,6 @@
                                                 <div class="alert alert-danger">@TempData[Constants.ERROR_ADD_ACCOUNT]</div>
                             }
 
-                            @* @await Component.InvokeAsync("EditDetails", new {accountId="aa9723f8-d1c5-42de-bfab-b24621c88963", idx=1}) *@
-
                             <div id="accountListView"></div>
                         </div>
                     </div>
@@ -121,7 +119,7 @@
                         }
                         var getUsers = () => {
                             $.ajax({
-                                url: '@Url.Action("FilterAccounts", "Home")',
+                                url: '@Url.Action("_AccountsListView", "Home")',
                                 datatype: 'html',
                                 method: 'GET',
                                 data: {filterTerm: $('#filterInput').val()},

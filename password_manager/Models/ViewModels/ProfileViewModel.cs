@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace password_manager.Models;
 
-public class EditUserInfoViewModel
+public class ProfileViewModel
 {
     [Required(ErrorMessage = "Username is required"), StringLength(32), Display(Name = "Username")]
     public string UserName { get; set; } = null!;

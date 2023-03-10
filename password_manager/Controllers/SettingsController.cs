@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Newtonsoft.Json;
 using password_manager.Models;
 using password_manager.Utils;
@@ -25,12 +26,18 @@ namespace password_manager.Controllers
             this.emailSender = emailSender;
         }
 
-        [Authorize(Roles=$"{Constants.ADMIN},{Constants.USER},{Constants.AUDITOR},{Constants.MANAGER}")]
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            // Initialization code here
+            TempData[Constants.ERROR_EDIT_USER] = "Please make sure you have entered all the proper fields when editing your password account.";
+        }
+
+        [Authorize(Roles = $"{Constants.ADMIN},{Constants.USER},{Constants.AUDITOR},{Constants.MANAGER}")]
         public IActionResult Index(string returnUrl)
         {
             if (!signInManager.IsSignedIn(User))
             {
-                return RedirectToAction(nameof(AccountController.Login), "Account", new {returnUrl = returnUrl});
+                return RedirectToAction(nameof(AccountController.Login), "Account", new { returnUrl = returnUrl });
             }
             return View();
         }
@@ -38,10 +45,9 @@ namespace password_manager.Controllers
         public async Task<IActionResult> DeleteAccount(ConfirmDeleteViewModel model)
         {
             var userId = HttpContext.Session.GetString(Constants.userId)!;
-
             var user = await userManager.FindByIdAsync(userId);
 
-            var errors = new List<string>{};
+            var errors = new List<string> { };
 
             if (user is null)
             {
@@ -132,7 +138,7 @@ namespace password_manager.Controllers
         [HttpPost]
         public async Task<IActionResult> Autosave(string autoSaveModel)
         {
-            var model = JsonConvert.DeserializeObject<EditUserInfoViewModel>(autoSaveModel)!;
+            var model = JsonConvert.DeserializeObject<ProfileViewModel>(autoSaveModel)!;
             // logger.LogWarning($"autosaving {model}");
 
             if
@@ -145,7 +151,7 @@ namespace password_manager.Controllers
             )
             {
                 logger.LogWarning("all fields should not be empty");
-                // TempData[Constants.ERROR_EDIT_USER] = "Please make sure you have entered all the proper fields when editing your password account.";
+                TempData[Constants.ERROR_EDIT_USER] = "Please make sure you have entered all the proper fields when editing your password account.";
                 return BadRequest(ModelState);
             }
 
@@ -224,7 +230,7 @@ namespace password_manager.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return View("Error", new ErrorViewModel {ErrorTitle="error", ErrorMessage="incorrect verification code"});
+                return View("Error", new ErrorViewModel { ErrorTitle = "error", ErrorMessage = "incorrect verification code" });
             }
 
             var result = await signInManager.TwoFactorSignInAsync("Email", twoFactor.TwoFactorCode, false, false);

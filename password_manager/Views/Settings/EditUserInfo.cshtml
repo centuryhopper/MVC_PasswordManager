@@ -1,4 +1,4 @@
-@model EditUserInfoViewModel
+@model ProfileViewModel
 @inject UserManager<ApplicationUser> userManager
 @inject RoleManager<IdentityRole> roleManager
 @inject IHttpContextAccessor ctx
@@ -6,9 +6,8 @@
 @{
     var autoSaveSeconds = 5;
     var getRoles = from role in roleManager.Roles where role.Name != Constants.ADMIN select role;
-    var roles = new List<IdentityRole> {new IdentityRole("")};
-    roles.AddRange(getRoles);
     var user = await userManager.FindByIdAsync(ctx.HttpContext!.Session.GetString(Constants.userId)!);
+    var currentRole = (await userManager.GetRolesAsync(user!)).FirstOrDefault();
 }
 
 <div class="text-center">
@@ -41,7 +40,9 @@
 
         <div class="form-group">
             @Html.LabelFor(m => m.Role, "Select a role:")
-            @Html.DropDownListFor(m => m.Role, new SelectList(roles))
+            <select id="myDropdown" class="form-control" asp-for="Role" asp-items="@(new SelectList(getRoles, currentRole))">
+                <option value="">Please select a role</option>
+            </select>
             <span asp-validation-for="Role" class="text-danger"></span>
         </div>
     </form>
@@ -55,17 +56,22 @@
     }
 </div>
 
-
 @section Scripts {
     <script>
-
         $(document).ready(() => {
+            // Get the dropdown element by its ID
+            var myDropdown = document.getElementById("myDropdown");
+
+             // Find the first option element that matches a certain condition
+            var defaultOption = Array.from(myDropdown.options).find(option => option.value === '@currentRole');
+
+            // Set the selected attribute of the default option to true
+            defaultOption.selected = true;
+
             setInterval(() =>
             {
                 autosave();
             }, @autoSaveSeconds * 1000);
         })
-
-
     </script>
 }

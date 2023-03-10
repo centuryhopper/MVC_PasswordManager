@@ -37,5 +37,8 @@ public class ManageController : Controller
 
         return View(new ManageUsersViewModel<ApplicationUser> { Users = users, Roles = roles });
     }
+
+
+
 }
 
